@@ -19,11 +19,56 @@ Login API (token-based) ✅
 Protected routes ✅
 Clean auth structure (not messy controllers) ✅
 
+🧠 Important Learning (Content Gold)
+
+In your video, explain:
+
+👉 Why token-based auth?
+👉 Why service layer?
+👉 Why not fat controllers?
+
+This builds authority.
+
+🧠 Why This Matters (Explain in Video)
+
+Say this clearly in your video:
+
+👉 “Validation should NEVER live inside controllers.”
+
+Because:
+
+Reusable
+Testable
+Cleaner controllers
+Scalable codebase
+
 -----
 
 Day 3
 
-👉 Designing Endpoint Management APIs (Clean Architecture in Laravel)
+👉 Day 3: Designing Endpoint Management APIs (Clean Architecture for SaaS in Laravel 13)
+
+🎯 Goal of Day 3
+
+Today is architecture-first, not coding blindly.
+
+By end:
+
+You will design how endpoints work
+Create DB structure
+Build clean module (Service + Controller)
+No messy code
+
+🧠 Explain This in Your Video (VERY IMPORTANT)
+
+👉 Why JSON fields for headers/body?
+👉 Why service layer?
+👉 Why user-based isolation?
+👉 Why interval field?
+
+This builds authority + trust
+
+-----
 
 Day 4
 
