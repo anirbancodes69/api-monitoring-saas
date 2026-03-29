@@ -1,0 +1,12 @@
+/vendor
+/node_modules
+.env
+/src/.env
+/src/vendor
+/src/node_modules
+/docker/mysql/data
+
+# Laravel specific
+/src/storage/*.key
+/src/storage/logs/*
+/src/bootstrap/cache/*
