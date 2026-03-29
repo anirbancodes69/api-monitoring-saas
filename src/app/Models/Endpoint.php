@@ -16,7 +16,8 @@ class Endpoint extends Model
         'expected_status',
         'interval',
         'is_active',
-        'last_alert_sent_at'
+        'last_alert_sent_at',
+        'last_status'
     ];
 
     protected $casts = [

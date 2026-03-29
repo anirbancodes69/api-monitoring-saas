@@ -452,7 +452,45 @@ Day 8 = “Make your SaaS proactive with intelligent alerts and email notificati
 
 Day 9
 
-👉 Building Dashboard APIs (Stats, Status, Performance)
+👉 Day 9: Smart Alerts & Production Readiness (Avoid Spam + State Change Logic in SaaS)
+
+🎯 Goal of Day 9
+
+Right now your system:
+
+❌ Sends alert every failure (even repeated)
+❌ No distinction between DOWN → DOWN
+❌ No recovery alerts
+
+👉 After today:
+
+✅ Alert only on state change (UP → DOWN)
+✅ Send recovery alert (DOWN → UP)
+✅ Reduce noise
+✅ Make it production usable
+
+🧠 Core Concept (VERY IMPORTANT)
+Only alert when state changes
+
+🧠 Explain This in Video (GOLD)
+
+👉
+
+“We only notify users when something changes, not every time it fails.”
+
+👉
+
+“This avoids alert fatigue and makes the system usable in production.”
+
+⚠️ Biggest Mistake Avoided
+
+❌ Sending alerts every minute
+❌ Spamming users
+❌ Ignoring recovery
+
+👉 You fixed all of these
+
+-----
 
 Day 10
 
