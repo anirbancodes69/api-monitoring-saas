@@ -11,7 +11,6 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Support\Carbon;
 
 class MonitorEndpointJob implements ShouldQueue
 {
@@ -28,20 +27,43 @@ class MonitorEndpointJob implements ShouldQueue
     {
         $startTime = microtime(true);
 
+        // Always work with fresh model
+        $endpoint = $this->endpoint->fresh();
+
         try {
             $response = Http::timeout(10)
-                ->withHeaders($this->endpoint->headers ?? [])
-                ->send($this->endpoint->method, $this->endpoint->url, [
-                    'json' => $this->endpoint->body ?? [],
+                ->withHeaders($endpoint->headers ?? [])
+                ->send($endpoint->method, $endpoint->url, [
+                    'json' => $endpoint->body ?? [],
                 ]);
 
             $responseTime = (microtime(true) - $startTime) * 1000;
 
-            $isSuccess = $response->status() == $this->endpoint->expected_status;
+            $isSuccess = $response->status() == $endpoint->expected_status;
+            $currentStatus = $isSuccess ? 'UP' : 'DOWN';
+            $previousStatus = $endpoint->last_status;
 
-            // Store log
+
+            // ✅ STATE CHANGE LOGIC (CORE)
+            if ($previousStatus !== $currentStatus) {
+
+                // Update FIRST (important)
+                $endpoint->update([
+                    'last_status' => $currentStatus
+                ]);
+
+                if ($currentStatus === 'DOWN') {
+                    $this->sendAlert($endpoint, "🚨 API DOWN: {$endpoint->url}");
+                }
+
+                if ($currentStatus === 'UP') {
+                    $this->sendRecoveryAlert($endpoint, "✅ API RECOVERED: {$endpoint->url}");
+                }
+            }
+
+            // ✅ Always store logs
             ApiLog::create([
-                'endpoint_id'   => $this->endpoint->id,
+                'endpoint_id'   => $endpoint->id,
                 'status'        => $isSuccess ? 'success' : 'fail',
                 'status_code'   => $response->status(),
                 'response_time' => $responseTime,
@@ -49,55 +71,60 @@ class MonitorEndpointJob implements ShouldQueue
                 'checked_at'    => now(),
             ]);
 
-            // Trigger alert if failed
-            if (!$isSuccess) {
-
-                $this->sendAlert("Unexpected status: " . $response->status());
-            }
-
         } catch (\Throwable $e) {
+
             $responseTime = (microtime(true) - $startTime) * 1000;
 
-            // Store failure log
+            // Log failure
             ApiLog::create([
-                'endpoint_id'   => $this->endpoint->id,
+                'endpoint_id'   => $endpoint->id,
                 'status'        => 'fail',
                 'response_time' => $responseTime,
                 'error_message' => $e->getMessage(),
                 'checked_at'    => now(),
             ]);
 
-            // Send alert
-            $this->sendAlert($e->getMessage());
+            $currentStatus = 'DOWN';
+            $previousStatus = $endpoint->last_status;
+
+            // ✅ Handle exception as DOWN state
+            if ($previousStatus !== $currentStatus) {
+
+                $endpoint->update([
+                    'last_status' => 'DOWN'
+                ]);
+
+                $this->sendAlert($endpoint, "🚨 Exception: {$e->getMessage()}");
+            }
         }
     }
 
     /**
-     * Send alert with basic cooldown logic
+     * Send failure alert (with optional cooldown)
      */
-    protected function sendAlert(string $message): void
+    protected function sendAlert(Endpoint $endpoint, string $message): void
     {
-        $endpoint = $this->endpoint->fresh();
-
-        // ⛔ Prevent spam (5 min cooldown)
-        if ($endpoint->last_alert_sent_at) {
-            $lastAlert = Carbon::parse($endpoint->last_alert_sent_at);
-
-            if ($lastAlert->diffInMinutes(now()) < 45) {
-                return;
-            }
-        }
-
         app(AlertService::class)->sendFailureAlert(
             $endpoint->user,
             $endpoint,
             $message
         );
 
-        // Update last alert time
+        // Optional: track last alert time
         $endpoint->update([
             'last_alert_sent_at' => now(),
         ]);
+    }
 
+    /**
+     * Send recovery alert
+     */
+    protected function sendRecoveryAlert(Endpoint $endpoint, string $message): void
+    {
+        app(AlertService::class)->sendRecoveryAlert(
+            $endpoint->user,
+            $endpoint,
+            $message
+        );
     }
 }
