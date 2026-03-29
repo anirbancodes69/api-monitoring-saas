@@ -292,8 +292,6 @@ Day 7
 
 👉 Day 7: Building Dashboard APIs (Uptime, Status & Performance Metrics in Laravel 13 SaaS)
 
-)
-
 🎯 Goal of Day 7
 
 By end:
