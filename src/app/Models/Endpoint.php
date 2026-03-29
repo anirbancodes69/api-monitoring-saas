@@ -15,7 +15,8 @@ class Endpoint extends Model
         'body',
         'expected_status',
         'interval',
-        'is_active'
+        'is_active',
+        'last_alert_sent_at'
     ];
 
     protected $casts = [
@@ -23,4 +24,9 @@ class Endpoint extends Model
         'body' => 'array',
         'is_active' => 'boolean'
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }
