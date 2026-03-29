@@ -4,9 +4,22 @@
 
 I’m mapping next few days so you don’t lose direction:
 
+-----
+
 Day 2
 
-👉 Authentication System with Laravel Sanctum (API-First Setup)
+👉 Day 2: Authentication System with Laravel 13 Sanctum (API-First SaaS Setup)
+
+🎯 Goal of Day 2
+
+By end of today:
+
+User registration API ✅
+Login API (token-based) ✅
+Protected routes ✅
+Clean auth structure (not messy controllers) ✅
+
+-----
 
 Day 3
 
