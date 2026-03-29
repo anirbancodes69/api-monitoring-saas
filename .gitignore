@@ -10,3 +10,7 @@
 /src/storage/*.key
 /src/storage/logs/*
 /src/bootstrap/cache/*
+
+# ui
+frontend/node_modules
+frontend/dist
