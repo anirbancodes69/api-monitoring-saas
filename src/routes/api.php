@@ -17,4 +17,6 @@ Route::middleware('auth:sanctum')->get('/me', function (Request $request) {
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/endpoints', [EndpointController::class, 'index']);
     Route::post('/endpoints', [EndpointController::class, 'store']);
+    Route::put('/endpoints/{id}', [EndpointController::class, 'update']);
+    Route::delete('/endpoints/{id}', [EndpointController::class, 'destroy']);
 });

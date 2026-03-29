@@ -72,7 +72,41 @@ This builds authority + trust
 
 Day 4
 
-👉 Building Endpoint CRUD with Validation & Best Practices
+👉 Day 4: Update & Delete Endpoints with Ownership Validation (Secure SaaS APIs in Laravel 13)
+
+🎯 Goal of Day 4
+
+Today you’ll:
+
+Add update endpoint API
+Add delete endpoint API
+Ensure user ownership (CRITICAL)
+Improve validation
+
+👉 This is where your SaaS becomes multi-tenant safe
+
+🧠 Real SaaS Thinking
+
+Without ownership checks:
+❌ User A can update/delete User B’s endpoints
+
+👉 That’s a serious security flaw
+
+🧠 Explain This in Video (GOLD CONTENT)
+
+Say this:
+
+👉 “We return 404 instead of 403 to avoid leaking resource existence.”
+
+👉 “Ownership validation is mandatory in any SaaS.”
+
+👉 “Never trust frontend for security.”
+
+⚠️ Common Mistakes
+
+❌ Endpoint::find($id) → insecure
+❌ No user check
+❌ Mass update without validation
 
 Day 5
 
