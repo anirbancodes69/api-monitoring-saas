@@ -290,7 +290,52 @@ And:
 
 Day 7
 
-👉 Scheduler Setup for Automated API Monitoring (Cron + Queues)
+👉 Day 7: Building Dashboard APIs (Uptime, Status & Performance Metrics in Laravel 13 SaaS)
+
+)
+
+🎯 Goal of Day 7
+
+By end:
+
+Get last status (UP/DOWN)
+Calculate uptime %
+Get average response time
+Return clean dashboard API
+
+👉 This is what users actually see and trust
+
+🧠 What We Are Building
+
+For each endpoint:
+
+Current status (UP/DOWN)
+Uptime percentage (last X logs)
+Avg response time
+Last checked time
+
+🧠 Explain This in Video (VERY IMPORTANT)
+
+👉 Why last 50 logs?
+→ Performance + recent accuracy
+
+👉 Why compute uptime like this?
+→ Simple + scalable
+
+👉 Why not compute on frontend?
+→ Backend = source of truth
+
+⚠️ Optimization Tip (Future)
+
+Right now:
+
+ApiLog::where(...)->get();
+
+Later:
+
+Add indexes
+Pre-compute stats
+Use caching (Redis)
 
 -----
 
