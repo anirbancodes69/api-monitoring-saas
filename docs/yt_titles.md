@@ -19,19 +19,144 @@ Login API (token-based) ✅
 Protected routes ✅
 Clean auth structure (not messy controllers) ✅
 
+🧠 Important Learning (Content Gold)
+
+In your video, explain:
+
+👉 Why token-based auth?
+👉 Why service layer?
+👉 Why not fat controllers?
+
+This builds authority.
+
+🧠 Why This Matters (Explain in Video)
+
+Say this clearly in your video:
+
+👉 “Validation should NEVER live inside controllers.”
+
+Because:
+
+Reusable
+Testable
+Cleaner controllers
+Scalable codebase
+
 -----
 
 Day 3
 
-👉 Designing Endpoint Management APIs (Clean Architecture in Laravel)
+👉 Day 3: Designing Endpoint Management APIs (Clean Architecture for SaaS in Laravel 13)
+
+🎯 Goal of Day 3
+
+Today is architecture-first, not coding blindly.
+
+By end:
+
+You will design how endpoints work
+Create DB structure
+Build clean module (Service + Controller)
+No messy code
+
+🧠 Explain This in Your Video (VERY IMPORTANT)
+
+👉 Why JSON fields for headers/body?
+👉 Why service layer?
+👉 Why user-based isolation?
+👉 Why interval field?
+
+This builds authority + trust
+
+-----
 
 Day 4
 
-👉 Building Endpoint CRUD with Validation & Best Practices
+👉 Day 4: Update & Delete Endpoints with Ownership Validation (Secure SaaS APIs in Laravel 13)
+
+🎯 Goal of Day 4
+
+Today you’ll:
+
+Add update endpoint API
+Add delete endpoint API
+Ensure user ownership (CRITICAL)
+Improve validation
+
+👉 This is where your SaaS becomes multi-tenant safe
+
+🧠 Real SaaS Thinking
+
+Without ownership checks:
+❌ User A can update/delete User B’s endpoints
+
+👉 That’s a serious security flaw
+
+🧠 Explain This in Video (GOLD CONTENT)
+
+Say this:
+
+👉 “We return 404 instead of 403 to avoid leaking resource existence.”
+
+👉 “Ownership validation is mandatory in any SaaS.”
+
+👉 “Never trust frontend for security.”
+
+⚠️ Common Mistakes
+
+❌ Endpoint::find($id) → insecure
+❌ No user check
+❌ Mass update without validation
+
+-----
 
 Day 5
 
-👉 Creating Monitoring Jobs with Laravel Queues & HTTP Client
+👉 Day 5: Building the Monitoring Engine with Queues & HTTP Client (Laravel 13 SaaS Core)
+
+🎯 Goal of Day 5
+
+By end:
+
+Your system will actually hit APIs
+Measure response time
+Detect failures
+Store logs
+
+👉 This is your USP feature
+
+🧠 Big Picture (Explain in Video)
+Scheduler → Dispatch Job → Call API → Measure → Store Logs → Trigger Alerts (later)
+
+🧠 Explain This in Video (IMPORTANT)
+
+👉 Why queues?
+
+Non-blocking
+Scalable
+Production-ready
+
+👉 Why measure response time?
+
+Performance monitoring
+
+👉 Why try-catch?
+
+Handle API failures gracefully
+⚠️ Common Mistakes
+
+❌ Running HTTP calls directly in controller
+❌ No queue → blocking system
+❌ Logging full response (huge DB)
+
+🔥 What You Built Today
+Real monitoring engine
+Async job processing
+Logging system
+
+👉 Your SaaS is now alive
+
+-----
 
 Day 6
 

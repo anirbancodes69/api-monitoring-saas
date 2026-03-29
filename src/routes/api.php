@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\EndpointController;
+use App\Jobs\MonitorEndpointJob;
+use App\Models\Endpoint;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -11,4 +14,18 @@ Route::prefix('auth')->group(function () {
 
 Route::middleware('auth:sanctum')->get('/me', function (Request $request) {
     return $request->user();
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/endpoints', [EndpointController::class, 'index']);
+    Route::post('/endpoints', [EndpointController::class, 'store']);
+    Route::put('/endpoints/{id}', [EndpointController::class, 'update']);
+    Route::delete('/endpoints/{id}', [EndpointController::class, 'destroy']);
+});
+
+Route::get('/test-monitor/{id}', function ($id) {
+    $endpoint = Endpoint::findOrFail($id);
+    MonitorEndpointJob::dispatch($endpoint);
+
+    return "Job dispatched";
 });
