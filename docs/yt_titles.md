@@ -108,9 +108,55 @@ Say this:
 ❌ No user check
 ❌ Mass update without validation
 
+-----
+
 Day 5
 
-👉 Creating Monitoring Jobs with Laravel Queues & HTTP Client
+👉 Day 5: Building the Monitoring Engine with Queues & HTTP Client (Laravel 13 SaaS Core)
+
+🎯 Goal of Day 5
+
+By end:
+
+Your system will actually hit APIs
+Measure response time
+Detect failures
+Store logs
+
+👉 This is your USP feature
+
+🧠 Big Picture (Explain in Video)
+Scheduler → Dispatch Job → Call API → Measure → Store Logs → Trigger Alerts (later)
+
+🧠 Explain This in Video (IMPORTANT)
+
+👉 Why queues?
+
+Non-blocking
+Scalable
+Production-ready
+
+👉 Why measure response time?
+
+Performance monitoring
+
+👉 Why try-catch?
+
+Handle API failures gracefully
+⚠️ Common Mistakes
+
+❌ Running HTTP calls directly in controller
+❌ No queue → blocking system
+❌ Logging full response (huge DB)
+
+🔥 What You Built Today
+Real monitoring engine
+Async job processing
+Logging system
+
+👉 Your SaaS is now alive
+
+-----
 
 Day 6
 
