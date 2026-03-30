@@ -26,6 +26,13 @@ class EndpointService
             ->firstOrFail();
     }
 
+    public function getById($endpointId, $userId)
+    {
+        return Endpoint::where('id', $endpointId)
+            ->where('user_id', $userId)
+            ->first();
+    }
+
     public function update($endpointId, array $data, $userId)
     {
         $endpoint = $this->findUserEndpoint($endpointId, $userId);
