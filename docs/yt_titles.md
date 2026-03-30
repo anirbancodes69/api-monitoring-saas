@@ -540,5 +540,34 @@ Click logout → token removed → back to login
 
 Production-grade frontend auth system
 
-
 -----
+
+Day 12
+
+👉 Day 12 — Dashboard UI (Modern SaaS Look)
+
+🎯 What we’ll build
+Card-based layout
+Status colors (UP / DOWN)
+Clean header with logout
+Responsive grid
+Better spacing & typography
+
+👉 Day 12 Part 2:
+
+Add REAL PRODUCT FEATURE:
+Dashboard UI
+➕ Add Endpoint Form
+🔄 Auto refresh dashboard (every 60s)
+🔔 Status change highlight
+🧠 Store endpoint in DB via API
+ Edit endpoint
+ Delete endpoint
+ Toggle active 
+
+🔥 What you now have
+✅ Correct state management
+✅ Clean UX
+✅ No 1970 bug
+✅ Proper UNKNOWN handling
+✅ Production-ready dashboard UI
