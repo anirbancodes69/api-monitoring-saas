@@ -17,6 +17,15 @@ export default function Dashboard() {
   const [alerts, setAlerts] = useState<{ id: number; text: string; type: "success" | "error" }[]>([]);
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
 
+  // 🚨 ALERT HISTORY STATE
+  const [alertHistory, setAlertHistory] = useState<any[]>([
+    // Simulated initial data
+    { id: 1, endpoint_id: 1, endpoint_name: "API Gateway", severity: "critical", message: "Endpoint went DOWN", timestamp: new Date(Date.now() - 8 * 60000), status_change: "DOWN" },
+    { id: 2, endpoint_id: 2, endpoint_name: "Auth Service", severity: "warning", message: "Slow response time detected", timestamp: new Date(Date.now() - 15 * 60000), status_change: "SLOW" },
+    { id: 3, endpoint_id: 1, endpoint_name: "API Gateway", severity: "success", message: "Endpoint recovered", timestamp: new Date(Date.now() - 20 * 60000), status_change: "UP" },
+    { id: 4, endpoint_id: 3, endpoint_name: "Payment Service", severity: "critical", message: "Multiple failed requests", timestamp: new Date(Date.now() - 35 * 60000), status_change: "DOWN" },
+  ]);
+
   const previousData = useRef<any[]>([]);
   const isFirstLoad = useRef(true);
 
@@ -62,19 +71,32 @@ export default function Dashboard() {
       if (!old) return;
 
       if (old.status !== item.status) {
-        const text =
-          item.status === "DOWN"
-            ? `${item.name} - Endpoint is DOWN`
-            : `${item.name} - Endpoint recovered`;
+        const isDown = item.status === "DOWN";
+        const text = isDown
+          ? `${item.name} - Endpoint is DOWN`
+          : `${item.name} - Endpoint recovered`;
 
-        const alertType: "success" | "error" = item.status === "DOWN" ? "error" : "success";
+        const alertType: "success" | "error" = isDown ? "error" : "success";
+        const severity = isDown ? "critical" : "success";
         const alert = { id: Date.now() + Math.random(), text, type: alertType };
 
+        // Add to toast alerts
         setAlerts((prev) => [alert, ...prev]);
-
         setTimeout(() => {
           setAlerts((prev) => prev.filter((a) => a.id !== alert.id));
         }, 5000);
+
+        // Add to alert history
+        const historyEntry = {
+          id: Date.now() + Math.random(),
+          endpoint_id: item.endpoint_id,
+          endpoint_name: item.name,
+          severity,
+          message: isDown ? "Endpoint went DOWN" : "Endpoint recovered",
+          timestamp: new Date(),
+          status_change: item.status,
+        };
+        setAlertHistory((prev) => [historyEntry, ...prev]);
       }
     });
   };
@@ -196,6 +218,28 @@ export default function Dashboard() {
     setTimeout(() => {
       setAlerts((prev) => prev.filter((a) => a.id !== alert.id));
     }, 4000);
+  };
+
+  // Get last alert for an endpoint
+  const getLastAlert = (endpointId: number) => {
+    return alertHistory.find((a) => a.endpoint_id === endpointId);
+  };
+
+  // Format time difference (e.g., "5m ago", "2h ago")
+  const formatTimeDiff = (date: any) => {
+    const now = new Date();
+    const diff = Math.floor((now.getTime() - new Date(date).getTime()) / 1000);
+    if (diff < 60) return "just now";
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return `${Math.floor(diff / 86400)}d ago`;
+  };
+
+  // Get severity badge style
+  const getSeverityStyle = (severity: string) => {
+    if (severity === "critical") return { bg: "#fee2e2", color: "#991b1b", icon: "🔴" };
+    if (severity === "warning") return { bg: "#fef3c7", color: "#92400e", icon: "🟡" };
+    return { bg: "#d1fae5", color: "#065f46", icon: "🟢" };
   };
 
   const handleLogout = () => {
@@ -347,6 +391,40 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* ALERT HISTORY PANEL */}
+      <div style={styles.alertHistorySection}>
+        <h2 style={styles.sectionTitle}>🚨 Alert History</h2>
+        {alertHistory.length === 0 ? (
+          <p style={styles.noAlerts}>No alerts yet. Your endpoints are looking good!</p>
+        ) : (
+          <div style={styles.alertHistoryGrid}>
+            {alertHistory.slice(0, 10).map((alert) => {
+              const severity = getSeverityStyle(alert.severity);
+              return (
+                <div key={alert.id} style={styles.alertHistoryItem}>
+                  <div style={styles.alertHistoryHeader}>
+                    <div>
+                      <h4 style={styles.alertEndpointName}>{alert.endpoint_name}</h4>
+                      <p style={styles.alertMessage}>{alert.message}</p>
+                    </div>
+                    <span
+                      style={{
+                        ...styles.severityBadge,
+                        background: severity.bg,
+                        color: severity.color,
+                      }}
+                    >
+                      {severity.icon} {alert.severity.toUpperCase()}
+                    </span>
+                  </div>
+                  <p style={styles.alertTime}>{formatTimeDiff(alert.timestamp)}</p>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       {/* ENDPOINTS GRID OR EMPTY STATE */}
       {data.length === 0 ? (
         <div style={styles.emptyState}>
@@ -404,6 +482,14 @@ export default function Dashboard() {
                     ? new Date(e.last_checked).toLocaleString()
                     : "Never"}
                 </p>
+
+                {getLastAlert(e.endpoint_id) && (
+                  <div style={styles.lastAlertInfo}>
+                    <span style={getSeverityStyle(getLastAlert(e.endpoint_id)?.severity).color === "#991b1b" ? styles.lastAlertBadgeCritical : styles.lastAlertBadge}>
+                      Last Alert: {getLastAlert(e.endpoint_id)?.message} ({formatTimeDiff(getLastAlert(e.endpoint_id)?.timestamp)})
+                    </span>
+                  </div>
+                )}
 
                 <div style={styles.actions}>
                   <button style={styles.edit} onClick={() => handleEdit(e)}>
@@ -732,6 +818,114 @@ const styles: any = {
     borderRadius: "50%",
     animation: "spin 1s linear infinite",
     margin: "0 auto 20px",
+  },
+
+  // Alert History Styles
+  alertHistorySection: {
+    background: "rgba(255,255,255,0.95)",
+    backdropFilter: "blur(20px)",
+    padding: 30,
+    borderRadius: 20,
+    marginBottom: 40,
+    boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
+    border: "1px solid rgba(255,255,255,0.2)",
+  },
+
+  sectionTitle: {
+    marginTop: 0,
+    marginBottom: 24,
+    fontSize: 22,
+    fontWeight: 700,
+    color: "#1a202c",
+  },
+
+  noAlerts: {
+    color: "#9ca3af",
+    textAlign: "center" as const,
+    padding: "30px",
+    backgroundColor: "#f9fafb",
+    borderRadius: 12,
+    marginBottom: 0,
+  },
+
+  alertHistoryGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+    gap: 16,
+  },
+
+  alertHistoryItem: {
+    background: "#f9fafb",
+    border: "1px solid #e5e7eb",
+    borderRadius: 12,
+    padding: 16,
+    transition: "all 0.2s ease",
+    ":hover": {
+      borderColor: "#d1d5db",
+      boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+    },
+  },
+
+  alertHistoryHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 12,
+    gap: 12,
+  },
+
+  alertEndpointName: {
+    margin: "0 0 4px 0",
+    fontSize: 16,
+    fontWeight: 700,
+    color: "#1a202c",
+  },
+
+  alertMessage: {
+    margin: 0,
+    fontSize: 13,
+    color: "#6b7280",
+  },
+
+  severityBadge: {
+    padding: "6px 12px",
+    borderRadius: 6,
+    fontSize: 11,
+    fontWeight: 700,
+    whiteSpace: "nowrap" as const,
+  },
+
+  alertTime: {
+    margin: 0,
+    fontSize: 12,
+    color: "#9ca3af",
+    fontWeight: 600,
+  },
+
+  lastAlertInfo: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTop: "1px solid #e5e7eb",
+  },
+
+  lastAlertBadge: {
+    display: "inline-block",
+    background: "#fef3c7",
+    color: "#92400e",
+    padding: "6px 10px",
+    borderRadius: 6,
+    fontSize: 11,
+    fontWeight: 600,
+  },
+
+  lastAlertBadgeCritical: {
+    display: "inline-block",
+    background: "#fee2e2",
+    color: "#991b1b",
+    padding: "6px 10px",
+    borderRadius: 6,
+    fontSize: 11,
+    fontWeight: 600,
   },
 };
 
