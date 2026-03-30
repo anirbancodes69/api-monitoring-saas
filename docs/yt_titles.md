@@ -510,3 +510,40 @@ api-monitor-saas/
 Nothing more.
 
 -----
+
+Day 11
+
+👉 Day 11 — Auth System (Clean & Production-Ready)
+
+🎯 Goal
+
+After today:
+
+Login → Token → Protected Routes → Auto Redirect → Logout
+
+👉 No broken states
+👉 No manual refresh hacks
+
+✅ FINAL FLOW (AFTER DAY 11)
+🔐 Login
+Enter credentials → token stored → redirect
+🛡️ Route Protection
+No token → blocked
+Token → access granted
+🔄 Expiry Handling
+401 → logout → redirect
+🚪 Logout
+Click logout → token removed → back to login
+🧠 WHAT YOU JUST BUILT
+
+👉 This is:
+
+Production-grade frontend auth system
+
+Used in:
+
+SaaS apps
+Dashboards
+Admin panels
+
+-----
