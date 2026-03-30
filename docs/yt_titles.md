@@ -571,3 +571,33 @@ Dashboard UI
 ✅ No 1970 bug
 ✅ Proper UNKNOWN handling
 ✅ Production-ready dashboard UI
+
+
+-----
+
+
+Day 13
+
+👉 Day 13 — Alerts System (Frontend + UX Layer)
+
+🎯 Goal
+
+Your backend already:
+
+Detects DOWN / UP ✅
+Sends emails ✅
+Has cooldown logic ✅
+
+👉 Now we make it visible + useful in UI
+
+🧠 What we will add (Frontend only)
+✅ 1. Alert Indicators in Dashboard
+Show “Recently Failed”
+Highlight unstable endpoints
+✅ 2. Status Change Awareness
+Detect UP → DOWN or DOWN → UP
+Show “Recovered” or “Failed”
+✅ 3. Visual Priority System
+Critical endpoints stand out
+✅ 4. (Optional enhancement-ready)
+Hook for future alert history API

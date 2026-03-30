@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   getDashboard,
+  getEndpoint,
   addEndpoint,
   updateEndpoint,
   deleteEndpoint,
@@ -11,9 +12,13 @@ import { useNavigate } from "react-router-dom";
 export default function Dashboard() {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [adding, setAdding] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [alerts, setAlerts] = useState<{ id: number; text: string; type: "success" | "error" }[]>([]);
+  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
+
+  const previousData = useRef<any[]>([]);
+  const isFirstLoad = useRef(true);
 
   const [form, setForm] = useState({
     name: "",
@@ -25,105 +30,77 @@ export default function Dashboard() {
 
   const navigate = useNavigate();
 
-  // 🔄 Fetch dashboard
+  // 🔄 FETCH + ALERT DETECTION
   const fetchData = async () => {
-    try {
-      setRefreshing(true);
-      const res = await getDashboard();
-      setData(res);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
+    const newData = await getDashboard();
+
+    if (!isFirstLoad.current) {
+      detectChanges(previousData.current, newData);
+    } else {
+      isFirstLoad.current = false;
     }
+    previousData.current = [...newData];
+
+    setData(newData);
+    setLoading(false);
   };
 
   useEffect(() => {
     fetchData();
-
-    const interval = setInterval(fetchData, 60000);
-
-    return () => clearInterval(interval);
+    const i = setInterval(fetchData, 60000);
+    return () => clearInterval(i);
   }, []);
 
-  // Form change
-  const handleChange = (e: any) => {
-    setForm((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
-  };
+  // 🚨 ALERT SYSTEM (CLEAN + AUTO REMOVE)
+  const detectChanges = (oldData: any[], newData: any[]) => {
+    if (!oldData || oldData.length === 0) return;
 
-  // ➕ ADD
-  const handleAdd = async () => {
-    try {
-      setAdding(true);
+    newData.forEach((item) => {
+      if (!item?.endpoint_id || !item?.name) return;
 
-      await addEndpoint(
-        form.name,
-        form.url,
-        form.method,
-        Number(form.expected_status),
-        Number(form.interval)
-      );
+      const old = oldData.find((o) => o?.endpoint_id === item.endpoint_id);
+      if (!old) return;
 
-      await fetchData();
-      resetForm();
-    } catch (err: any) {
-      alert(err.message);
-    } finally {
-      setAdding(false);
-    }
-  };
+      if (old.status !== item.status) {
+        const text =
+          item.status === "DOWN"
+            ? `${item.name} - Endpoint is DOWN`
+            : `${item.name} - Endpoint recovered`;
 
-  // ✏️ EDIT (prefill)
-  const handleEdit = (endpoint: any) => {
-    setEditingId(endpoint.endpoint_id);
+        const alertType: "success" | "error" = item.status === "DOWN" ? "error" : "success";
+        const alert = { id: Date.now() + Math.random(), text, type: alertType };
 
-    setForm({
-      name: endpoint.name,
-      url: endpoint.url,
-      method: "GET",
-      expected_status: "200",
-      interval: "5",
+        setAlerts((prev) => [alert, ...prev]);
+
+        setTimeout(() => {
+          setAlerts((prev) => prev.filter((a) => a.id !== alert.id));
+        }, 5000);
+      }
     });
   };
 
-  // 🔄 UPDATE
-  const handleUpdate = async () => {
-    try {
-      setAdding(true);
-
-      await updateEndpoint(editingId!, {
-        name: form.name,
-        url: form.url,
-        method: form.method,
-        expected_status: Number(form.expected_status),
-        interval: Number(form.interval),
-      });
-
-      await fetchData();
-      setEditingId(null);
-      resetForm();
-    } catch (err: any) {
-      alert(err.message);
-    } finally {
-      setAdding(false);
+  // FORM
+  const handleChange = (e: any) => {
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+    if (formErrors[name]) {
+      setFormErrors({ ...formErrors, [name]: "" });
     }
   };
 
-  // 🗑 DELETE
-  const handleDelete = async (id: number) => {
-    if (!confirm("Delete this endpoint?")) return;
-
-    try {
-      await deleteEndpoint(id);
-      await fetchData();
-    } catch (err: any) {
-      alert(err.message);
-    }
+  const validateForm = () => {
+    const errors: { [key: string]: string } = {};
+    if (!form.name.trim()) errors.name = "API Name is required";
+    if (!form.url.trim()) errors.url = "URL is required";
+    if (!/^https?:\/\/.+/.test(form.url)) errors.url = "URL must start with http:// or https://";
+    if (!/^\d+$/.test(form.interval) || Number(form.interval) < 1) errors.interval = "Interval must be at least 1 minute";
+    if (!/^\d+$/.test(form.expected_status)) errors.expected_status = "Status must be a number";
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const resetForm = () => {
+    setEditingId(null);
     setForm({
       name: "",
       url: "",
@@ -131,6 +108,94 @@ export default function Dashboard() {
       expected_status: "200",
       interval: "5",
     });
+    setFormErrors({});
+  };
+
+  const handleAdd = async () => {
+    if (!validateForm()) return;
+
+    setAdding(true);
+    try {
+      await addEndpoint(
+        form.name.trim(),
+        form.url.trim(),
+        form.method,
+        Number(form.expected_status),
+        Number(form.interval)
+      );
+      await fetchData();
+      resetForm();
+      addAlert("Endpoint added successfully", "success");
+    } catch (error) {
+      addAlert("Failed to add endpoint", "error");
+    }
+    setAdding(false);
+  };
+
+  const handleEdit = async (e: any) => {
+    setEditingId(e.endpoint_id);
+    setFormErrors({});
+    
+    try {
+      // Fetch full endpoint details to get method, expected_status, interval
+      const endpoint = await getEndpoint(e.endpoint_id);
+      setForm({
+        name: endpoint.name || "",
+        url: endpoint.url || "",
+        method: endpoint.method || "GET",
+        expected_status: String(endpoint.expected_status || "200"),
+        interval: String(endpoint.interval || "5"),
+      });
+    } catch (error) {
+      // Fallback to available data if fetch fails
+      setForm({
+        name: e.name || "",
+        url: e.url || "",
+        method: "GET",
+        expected_status: "200",
+        interval: "5",
+      });
+    }
+  };
+
+  const handleUpdate = async () => {
+    if (!validateForm()) return;
+
+    setAdding(true);
+    try {
+      await updateEndpoint(editingId!, {
+        name: form.name.trim(),
+        url: form.url.trim(),
+        method: form.method,
+        expected_status: Number(form.expected_status),
+        interval: Number(form.interval),
+      });
+      await fetchData();
+      resetForm();
+      addAlert("Endpoint updated successfully", "success");
+    } catch (error) {
+      addAlert("Failed to update endpoint", "error");
+    }
+    setAdding(false);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Delete this endpoint? This action cannot be undone.")) return;
+    try {
+      await deleteEndpoint(id);
+      await fetchData();
+      addAlert("Endpoint deleted successfully", "success");
+    } catch (error) {
+      addAlert("Failed to delete endpoint", "error");
+    }
+  };
+
+  const addAlert = (text: string, alertType: "success" | "error") => {
+    const alert = { id: Date.now() + Math.random(), text, type: alertType };
+    setAlerts((prev) => [alert, ...prev]);
+    setTimeout(() => {
+      setAlerts((prev) => prev.filter((a) => a.id !== alert.id));
+    }, 4000);
   };
 
   const handleLogout = () => {
@@ -138,229 +203,562 @@ export default function Dashboard() {
     navigate("/");
   };
 
-  const getStatus = (endpoint: any) => {
-    if (!endpoint.last_checked) return "UNKNOWN";
-    return endpoint.status;
+  const statusColor = (status: string) => {
+    if (status === "UP") return { bg: "#d1fae5", color: "#065f46", icon: "✓" };
+    if (status === "DOWN") return { bg: "#fee2e2", color: "#991b1b", icon: "⚠️" };
+    return { bg: "#f3f4f6", color: "#4b5563", icon: "?" };
   };
 
-  if (loading) return <div style={styles.loader}>Loading...</div>;
+  if (loading) return <div style={styles.loader}>
+    <div style={styles.spinner}></div>
+    <p>Loading your dashboard...</p>
+  </div>;
 
   return (
     <div style={styles.page}>
+      {/* TOAST ALERTS */}
+      <div style={styles.toastWrap}>
+        {alerts.map((a) => (
+          <div key={a.id} style={{
+            ...styles.toast,
+            background: a.type === "error" ? "#fee2e2" : "#d1fae5",
+            color: a.type === "error" ? "#991b1b" : "#065f46",
+            borderLeft: `4px solid ${a.type === "error" ? "#dc2626" : "#10b981"}`,
+          }}>
+            {a.type === "error" ? "❌" : "✓"} {a.text}
+          </div>
+        ))}
+      </div>
+
       {/* HEADER */}
       <div style={styles.header}>
-        <h1 style={styles.title}>🚀 API Monitor</h1>
-
         <div>
-          <p style={styles.refreshText}>
-            {refreshing ? "Refreshing..." : "Auto-refresh every 60s"}
-          </p>
-          <button onClick={handleLogout} style={styles.logout}>
-            Logout
+          <h1 style={styles.title}>🚀 API Monitor</h1>
+          <p style={styles.subtitle}>Real-time endpoint monitoring</p>
+        </div>
+
+        <div style={styles.headerRight}>
+          <p style={styles.sub}>↻ Auto-refresh: 60s</p>
+          <button style={styles.logout} onClick={handleLogout}>
+            ← Logout
           </button>
         </div>
       </div>
 
-      {/* FORM */}
+      {/* FORM CARD */}
       <div style={styles.formCard}>
-        <h3>{editingId ? "Edit Endpoint" : "Add Endpoint"}</h3>
+        <h3 style={styles.formTitle}>
+          {editingId ? "📝 Edit Endpoint" : "➕ Add New Endpoint"}
+        </h3>
 
         <div style={styles.formGrid}>
-          <input
-            name="name"
-            placeholder="API Name"
-            value={form.name}
-            onChange={handleChange}
-            style={styles.input}
-          />
+          <div style={styles.formGroup}>
+            <input
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              placeholder="API Name"
+              style={{
+                ...styles.input,
+                borderColor: formErrors.name ? "#dc2626" : "#e5e7eb",
+                backgroundColor: formErrors.name ? "#fef2f2" : "#fff"
+              }}
+            />
+            {formErrors.name && <p style={styles.error}>{formErrors.name}</p>}
+          </div>
 
-          <input
-            name="url"
-            placeholder="https://api.example.com"
-            value={form.url}
-            onChange={handleChange}
-            style={styles.input}
-          />
+          <div style={styles.formGroup}>
+            <input
+              name="url"
+              value={form.url}
+              onChange={handleChange}
+              placeholder="https://api.example.com/health"
+              style={{
+                ...styles.input,
+                borderColor: formErrors.url ? "#dc2626" : "#e5e7eb",
+                backgroundColor: formErrors.url ? "#fef2f2" : "#fff"
+              }}
+            />
+            {formErrors.url && <p style={styles.error}>{formErrors.url}</p>}
+          </div>
 
-          <select
-            name="method"
-            value={form.method}
-            onChange={handleChange}
-            style={styles.input}
-          >
-            <option>GET</option>
-            <option>POST</option>
-            <option>PUT</option>
-            <option>DELETE</option>
-          </select>
+          <div style={styles.formGroup}>
+            <select name="method" value={form.method} onChange={handleChange} style={styles.input}>
+              <option>GET</option>
+              <option>POST</option>
+              <option>PUT</option>
+              <option>DELETE</option>
+              <option>PATCH</option>
+            </select>
+          </div>
 
-          <input
-            name="expected_status"
-            type="number"
-            value={form.expected_status}
-            onChange={handleChange}
-            style={styles.input}
-          />
+          <div style={styles.formGroup}>
+            <input
+              name="expected_status"
+              value={form.expected_status}
+              onChange={handleChange}
+              placeholder="Expected Status (e.g., 200)"
+              style={{
+                ...styles.input,
+                borderColor: formErrors.expected_status ? "#dc2626" : "#e5e7eb",
+                backgroundColor: formErrors.expected_status ? "#fef2f2" : "#fff"
+              }}
+            />
+            {formErrors.expected_status && <p style={styles.error}>{formErrors.expected_status}</p>}
+          </div>
 
-          <input
-            name="interval"
-            type="number"
-            value={form.interval}
-            onChange={handleChange}
-            style={styles.input}
-          />
+          <div style={styles.formGroup}>
+            <input
+              name="interval"
+              value={form.interval}
+              onChange={handleChange}
+              placeholder="Interval (minutes, min 1)"
+              style={{
+                ...styles.input,
+                borderColor: formErrors.interval ? "#dc2626" : "#e5e7eb",
+                backgroundColor: formErrors.interval ? "#fef2f2" : "#fff"
+              }}
+            />
+            {formErrors.interval && <p style={styles.error}>{formErrors.interval}</p>}
+          </div>
 
-          <button
-            onClick={editingId ? handleUpdate : handleAdd}
-            style={styles.addBtn}
-          >
-            {adding
-              ? "Processing..."
-              : editingId
-              ? "Update"
-              : "Add Endpoint"}
-          </button>
+          <div style={styles.buttonGroup}>
+            <button
+              onClick={editingId ? handleUpdate : handleAdd}
+              disabled={adding}
+              style={{
+                ...styles.primaryBtn,
+                opacity: adding ? 0.7 : 1,
+                cursor: adding ? "not-allowed" : "pointer"
+              }}
+            >
+              {adding ? "Processing..." : editingId ? "Update" : "Add"}
+            </button>
+            {editingId && (
+              <button
+                onClick={resetForm}
+                disabled={adding}
+                style={styles.secondaryBtn}
+              >
+                Cancel
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* CARDS */}
-      <div style={styles.grid}>
-        {data.map((endpoint: any) => {
-          const status = getStatus(endpoint);
+      {/* ENDPOINTS GRID OR EMPTY STATE */}
+      {data.length === 0 ? (
+        <div style={styles.emptyState}>
+          <p style={styles.emptyIcon}>📡</p>
+          <h3>No Endpoints Yet</h3>
+          <p>Add your first API endpoint using the form above to start monitoring.</p>
+        </div>
+      ) : (
+        <div style={styles.grid}>
+          {data.map((e: any) => {
+            const s = statusColor(e.status);
 
-          return (
-            <div key={endpoint.endpoint_id} style={styles.card}>
-              <div style={styles.cardTop}>
-                <h3>{endpoint.name}</h3>
+            return (
+              <div
+                key={e.endpoint_id}
+                style={styles.card}
+                onMouseEnter={(ev) =>
+                  (ev.currentTarget.style.boxShadow = "0 20px 40px rgba(0,0,0,0.15)")
+                }
+                onMouseLeave={(ev) =>
+                  (ev.currentTarget.style.boxShadow = "0 10px 25px rgba(0,0,0,0.08)")
+                }
+              >
+                <div style={styles.cardTop}>
+                  <div>
+                    <h3 style={styles.cardTitle}>{e.name}</h3>
+                    <p style={styles.cardUrl}>{e.url}</p>
+                  </div>
 
-                <span
-                  style={{
-                    ...styles.badge,
-                    background:
-                      status === "UP"
-                        ? "#e6f9f0"
-                        : status === "DOWN"
-                        ? "#ffe6e6"
-                        : "#eee",
-                  }}
-                >
-                  {status}
-                </span>
+                  <span
+                    style={{
+                      ...styles.badge,
+                      background: s.bg,
+                      color: s.color,
+                    }}
+                  >
+                    {s.icon} {e.status}
+                  </span>
+                </div>
+
+                <div style={styles.metricsGrid}>
+                  <div style={styles.metric}>
+                    <p style={styles.metricLabel}>Uptime</p>
+                    <p style={styles.metricValue}>{e.uptime_percentage || "0"}%</p>
+                  </div>
+
+                  <div style={styles.metric}>
+                    <p style={styles.metricLabel}>Avg Response</p>
+                    <p style={styles.metricValue}>{Math.round(e.avg_response_time || 0)} ms</p>
+                  </div>
+                </div>
+
+                <p style={styles.time}>
+                  Last checked: {e.last_checked
+                    ? new Date(e.last_checked).toLocaleString()
+                    : "Never"}
+                </p>
+
+                <div style={styles.actions}>
+                  <button style={styles.edit} onClick={() => handleEdit(e)}>
+                    ✎ Edit
+                  </button>
+                  <button
+                    style={styles.delete}
+                    onClick={() => handleDelete(e.endpoint_id)}
+                  >
+                    🗑 Delete
+                  </button>
+                </div>
               </div>
-
-              <p>Uptime: {endpoint.uptime_percentage}%</p>
-              <p>
-                Avg: {Math.round(endpoint.avg_response_time)} ms
-              </p>
-
-              <p style={styles.time}>
-                {endpoint.last_checked
-                  ? new Date(endpoint.last_checked).toLocaleString()
-                  : "Not checked yet"}
-              </p>
-
-              <div style={{ marginTop: 10 }}>
-                <button
-                  onClick={() => handleEdit(endpoint)}
-                  style={styles.editBtn}
-                >
-                  Edit
-                </button>
-
-                <button
-                  onClick={() =>
-                    handleDelete(endpoint.endpoint_id)
-                  }
-                  style={styles.deleteBtn}
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
 
-// 🎨 STYLES
-
+/* 🎨 PREMIUM MODERN STYLES */
 const styles: any = {
   page: {
+    padding: "20px",
+    background: "linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)",
     minHeight: "100vh",
-    padding: "40px",
-    background: "linear-gradient(135deg, #667eea, #764ba2)",
+    fontFamily: "'Segoe UI', system-ui, -apple-system, sans-serif",
   },
 
   header: {
     display: "flex",
     justifyContent: "space-between",
-    marginBottom: 30,
+    alignItems: "center",
+    color: "#fff",
+    marginBottom: 40,
+    paddingBottom: 20,
+    borderBottom: "2px solid rgba(255,255,255,0.1)",
   },
 
-  title: { color: "#fff" },
+  title: {
+    fontSize: 32,
+    fontWeight: 800,
+    margin: 0,
+    letterSpacing: "-0.5px",
+  },
 
-  refreshText: { color: "#fff", fontSize: 12 },
+  subtitle: {
+    fontSize: 14,
+    opacity: 0.9,
+    margin: "4px 0 0 0",
+  },
+
+  headerRight: {
+    display: "flex",
+    flexDirection: "column" as const,
+    alignItems: "flex-end",
+    gap: 10,
+  },
+
+  sub: {
+    fontSize: 12,
+    opacity: 0.8,
+    margin: 0,
+  },
 
   logout: {
-    background: "#ff4d4f",
+    background: "rgba(255,255,255,0.15)",
+    backdropFilter: "blur(10px)",
     color: "#fff",
-    border: "none",
-    padding: "8px 12px",
+    border: "1px solid rgba(255,255,255,0.2)",
+    padding: "8px 16px",
+    borderRadius: 8,
+    cursor: "pointer",
+    fontSize: 13,
+    fontWeight: 600,
+    transition: "all 0.3s ease",
+    ":hover": {
+      background: "rgba(255,255,255,0.25)",
+    },
   },
 
   formCard: {
-    background: "#fff",
-    padding: 20,
-    borderRadius: 12,
-    marginBottom: 20,
+    background: "rgba(255,255,255,0.95)",
+    backdropFilter: "blur(20px)",
+    padding: 30,
+    borderRadius: 20,
+    marginBottom: 40,
+    boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
+    border: "1px solid rgba(255,255,255,0.2)",
+  },
+
+  formTitle: {
+    marginTop: 0,
+    marginBottom: 25,
+    fontSize: 20,
+    fontWeight: 700,
+    color: "#1a202c",
   },
 
   formGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-    gap: 10,
+    gap: 16,
   },
 
-  input: { padding: 10 },
+  formGroup: {
+    display: "flex",
+    flexDirection: "column" as const,
+  },
 
-  addBtn: {
-    background: "#667eea",
+  input: {
+    padding: "12px 14px",
+    borderRadius: 10,
+    border: "2px solid #e5e7eb",
+    fontSize: 14,
+    fontFamily: "inherit",
+    transition: "all 0.3s ease",
+    backgroundColor: "#fff",
+    color: "#1a202c",
+    ":focus": {
+      outline: "none",
+      borderColor: "#667eea",
+      boxShadow: "0 0 0 3px rgba(102, 126, 234, 0.1)",
+    },
+  },
+
+  error: {
+    color: "#dc2626",
+    fontSize: 12,
+    marginTop: 4,
+    margin: 0,
+  },
+
+  buttonGroup: {
+    display: "flex",
+    gap: 10,
+    gridColumn: "span 2",
+  },
+
+  primaryBtn: {
+    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
     color: "#fff",
     border: "none",
+    padding: "12px 24px",
+    borderRadius: 10,
+    cursor: "pointer",
+    fontSize: 14,
+    fontWeight: 700,
+    transition: "all 0.3s ease",
+    boxShadow: "0 10px 25px rgba(102, 126, 234, 0.3)",
+    flex: 1,
+  },
+
+  secondaryBtn: {
+    background: "rgba(102, 126, 234, 0.1)",
+    color: "#667eea",
+    border: "1px solid #667eea",
+    padding: "12px 24px",
+    borderRadius: 10,
+    cursor: "pointer",
+    fontSize: 14,
+    fontWeight: 700,
+    transition: "all 0.3s ease",
+  },
+
+  emptyState: {
+    background: "rgba(255,255,255,0.95)",
+    backdropFilter: "blur(20px)",
+    padding: 60,
+    borderRadius: 20,
+    textAlign: "center" as const,
+    color: "#4b5563",
+    boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
+  },
+
+  emptyIcon: {
+    fontSize: 60,
+    margin: "0 0 20px 0",
   },
 
   grid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
-    gap: 20,
+    gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+    gap: 24,
   },
 
   card: {
-    background: "#fff",
-    padding: 20,
-    borderRadius: 12,
+    background: "rgba(255,255,255,0.95)",
+    backdropFilter: "blur(20px)",
+    padding: 24,
+    borderRadius: 16,
+    boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
+    transition: "all 0.3s ease cubic-bezier(0.4, 0, 0.2, 1)",
+    border: "1px solid rgba(255,255,255,0.2)",
+    cursor: "pointer",
+  },
+
+  cardTop: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 16,
+  },
+
+  cardTitle: {
+    margin: 0,
+    fontSize: 18,
+    fontWeight: 700,
+    color: "#1a202c",
+  },
+
+  cardUrl: {
+    margin: "4px 0 0 0",
+    fontSize: 12,
+    color: "#6b7280",
+    wordBreak: "break-all" as const,
   },
 
   badge: {
-    padding: "4px 10px",
-    borderRadius: 20,
+    padding: "8px 14px",
+    borderRadius: 8,
+    fontSize: 12,
+    fontWeight: 700,
+    whiteSpace: "nowrap" as const,
   },
 
-  time: { fontSize: 12 },
+  metricsGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: 12,
+    marginBottom: 16,
+  },
 
-  editBtn: {
-    marginRight: 10,
-    background: "#ffc107",
+  metric: {
+    margin: 0,
+  },
+
+  metricLabel: {
+    fontSize: 11,
+    color: "#9ca3af",
+    margin: 0,
+    fontWeight: 600,
+    textTransform: "uppercase" as const,
+    letterSpacing: "0.5px",
+  },
+
+  metricValue: {
+    fontSize: 18,
+    fontWeight: 700,
+    color: "#1a202c",
+    margin: "4px 0 0 0",
+  },
+
+  time: {
+    fontSize: 12,
+    color: "#9ca3af",
+    margin: "12px 0 16px 0",
+    borderTop: "1px solid #f3f4f6",
+    paddingTop: 12,
+  },
+
+  actions: {
+    marginTop: 16,
+    display: "flex",
+    gap: 8,
+  },
+
+  edit: {
+    background: "#fbbf24",
+    color: "#78350f",
     border: "none",
+    padding: "8px 12px",
+    borderRadius: 8,
+    cursor: "pointer",
+    fontSize: 13,
+    fontWeight: 600,
+    transition: "all 0.2s ease",
+    flex: 1,
   },
 
-  deleteBtn: {
-    background: "#ff4d4f",
+  delete: {
+    background: "#f87171",
     color: "#fff",
     border: "none",
+    padding: "8px 12px",
+    borderRadius: 8,
+    cursor: "pointer",
+    fontSize: 13,
+    fontWeight: 600,
+    transition: "all 0.2s ease",
+    flex: 1,
   },
 
-  loader: { textAlign: "center", marginTop: 100 },
+  toastWrap: {
+    position: "fixed" as const,
+    top: 20,
+    right: 20,
+    zIndex: 9999,
+    maxWidth: 400,
+  },
+
+  toast: {
+    padding: "14px 16px",
+    borderRadius: 12,
+    marginBottom: 12,
+    minWidth: 260,
+    fontSize: 14,
+    fontWeight: 600,
+    backdropFilter: "blur(10px)",
+    boxShadow: "0 10px 30px rgba(0,0,0,0.2)",
+    animation: "slideIn 0.3s ease",
+  },
+
+  loader: {
+    padding: 80,
+    textAlign: "center" as const,
+    color: "#fff",
+  },
+
+  spinner: {
+    width: 50,
+    height: 50,
+    border: "4px solid rgba(255,255,255,0.3)",
+    borderTop: "4px solid #fff",
+    borderRadius: "50%",
+    animation: "spin 1s linear infinite",
+    margin: "0 auto 20px",
+  },
 };
+
+// Add CSS animations
+const styleSheet = document.createElement("style");
+styleSheet.textContent = `
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  @keyframes slideIn {
+    from {
+      transform: translateX(400px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  button:hover {
+    transform: translateY(-2px);
+  }
+  button:active {
+    transform: translateY(0);
+  }
+`;
+if (!document.head.querySelector("[data-styles]")) {
+  styleSheet.setAttribute("data-styles", "true");
+  document.head.appendChild(styleSheet);
+}

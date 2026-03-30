@@ -48,6 +48,26 @@ export const getDashboard = async () => {
   return data;
 };
 
+// 🔍 GET ENDPOINT BY ID
+export const getEndpoint = async (id: number) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API_URL}/endpoints/${id}`, {
+    headers: {
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data.message || "Failed to fetch endpoint");
+  }
+
+  return data;
+};
+
 // ➕ ADD
 export const addEndpoint = async (
   name: string,

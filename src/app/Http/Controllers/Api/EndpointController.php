@@ -17,6 +17,17 @@ class EndpointController extends Controller
         );
     }
 
+    public function show($id, Request $request, EndpointService $service)
+    {
+        $endpoint = $service->getById($id, $request->user()->id);
+        
+        if (!$endpoint) {
+            return response()->json(['message' => 'Endpoint not found'], 404);
+        }
+
+        return response()->json($endpoint);
+    }
+
     public function store(StoreEndpointRequest $request, EndpointService $service)
     {
         return response()->json(
