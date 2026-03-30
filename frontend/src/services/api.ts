@@ -30,6 +30,11 @@ export const getDashboard = async () => {
 
   const data = await res.json();
 
+  if (res.status === 401) {
+  localStorage.removeItem("token");
+  window.location.href = "/";
+}
+
   if (!res.ok) {
     throw new Error(data.message || "Failed to fetch dashboard");
   }

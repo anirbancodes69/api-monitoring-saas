@@ -1,14 +1,25 @@
 import { useEffect, useState } from "react";
 import { getDashboard } from "../services/api";
 import { removeToken } from "../utils/auth";
+import { useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
   const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
-      const res = await getDashboard();
-      setData(res);
+      try {
+        const res = await getDashboard();
+        setData(res);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchData();
@@ -16,18 +27,21 @@ export default function Dashboard() {
 
   const handleLogout = () => {
     removeToken();
-    window.location.href = "/";
+    navigate("/");
   };
 
-  if (!data) return <p>Loading...</p>;
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p style={{ color: "red" }}>{error}</p>;
 
   return (
     <div style={{ padding: 20 }}>
-      <button onClick={handleLogout}>Logout</button>
+      <button onClick={handleLogout} style={{ marginBottom: 20 }}>
+        Logout
+      </button>
 
       <h1>API Monitor Dashboard</h1>
 
-      {data.map((endpoint: any) => (
+      {Array.isArray(data) && data.map((endpoint: any) => (
         <div key={endpoint.id} style={{ marginBottom: 20 }}>
           <h3>{endpoint.name}</h3>
           <p>Status: {endpoint.status}</p>

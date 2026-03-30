@@ -540,10 +540,5 @@ Click logout → token removed → back to login
 
 Production-grade frontend auth system
 
-Used in:
-
-SaaS apps
-Dashboards
-Admin panels
 
 -----
