@@ -8,6 +8,16 @@ import {
 } from "../services/api";
 import { removeToken } from "../utils/auth";
 import { useNavigate } from "react-router-dom";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 
 export default function Dashboard() {
   const [data, setData] = useState<any[]>([]);
@@ -25,6 +35,10 @@ export default function Dashboard() {
     { id: 3, endpoint_id: 1, endpoint_name: "API Gateway", severity: "success", message: "Endpoint recovered", timestamp: new Date(Date.now() - 20 * 60000), status_change: "UP" },
     { id: 4, endpoint_id: 3, endpoint_name: "Payment Service", severity: "critical", message: "Multiple failed requests", timestamp: new Date(Date.now() - 35 * 60000), status_change: "DOWN" },
   ]);
+
+  // 📈 ANALYTICS TIME-SERIES DATA STATE
+  const [analyticsData, setAnalyticsData] = useState<any[]>([]);
+  const [selectedEndpointAnalytics, setSelectedEndpointAnalytics] = useState<number | null>(null);
 
   const previousData = useRef<any[]>([]);
   const isFirstLoad = useRef(true);
@@ -242,6 +256,44 @@ export default function Dashboard() {
     return { bg: "#d1fae5", color: "#065f46", icon: "🟢" };
   };
 
+  // 📈 GENERATE SIMULATED TIME-SERIES DATA (Last 24 hours)
+  const generateTimeSeriesData = () => {
+    const now = new Date();
+    const chartData = [];
+    
+    // Generate 24 data points (1 per hour)
+    for (let i = 23; i >= 0; i--) {
+      const time = new Date(now.getTime() - i * 60 * 60 * 1000);
+      const hour = time.getHours().toString().padStart(2, "0");
+      
+      // Simulate response times with slight variance
+      const baseTime = 150 + Math.sin(i / 5) * 50; // Base with wave pattern
+      const variance = Math.random() * 60 - 30; // ±30ms variance
+      const responseTime = Math.max(50, Math.round(baseTime + variance));
+      
+      // Simulate uptime (95-99% except for occasional dips)
+      const uptime = i % 8 === 0 ? 85 + Math.random() * 10 : 96 + Math.random() * 4;
+      
+      chartData.push({
+        time: hour + ":00",
+        responseTime,
+        uptime: Math.round(uptime * 100) / 100,
+        hour: i,
+      });
+    }
+    
+    return chartData;
+  };
+
+  // Initialize analytics data on component mount
+  useEffect(() => {
+    const initialData = generateTimeSeriesData();
+    setAnalyticsData(initialData);
+    if (data.length > 0) {
+      setSelectedEndpointAnalytics(data[0].endpoint_id);
+    }
+  }, [data]);
+
   const handleLogout = () => {
     removeToken();
     navigate("/");
@@ -424,6 +476,97 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* 📈 ANALYTICS SECTION */}
+      {data.length > 0 && (
+        <div style={styles.analyticsSection}>
+          <h2 style={styles.sectionTitle}>📈 Response Time Analytics (Last 24 Hours)</h2>
+          
+          {data.length > 1 && (
+            <div style={styles.endpointTabs}>
+              {data.map((endpoint) => (
+                <button
+                  key={endpoint.endpoint_id}
+                  onClick={() => setSelectedEndpointAnalytics(endpoint.endpoint_id)}
+                  style={{
+                    ...styles.tab,
+                    background: selectedEndpointAnalytics === endpoint.endpoint_id ? "#667eea" : "#f3f4f6",
+                    color: selectedEndpointAnalytics === endpoint.endpoint_id ? "#fff" : "#1a202c",
+                    borderBottom: selectedEndpointAnalytics === endpoint.endpoint_id ? "2px solid #667eea" : "none",
+                  }}
+                >
+                  {endpoint.name}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div style={styles.chartContainer}>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={analyticsData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis 
+                  dataKey="time" 
+                  stroke="#6b7280"
+                  style={{ fontSize: 12 }}
+                />
+                <YAxis 
+                  stroke="#6b7280"
+                  style={{ fontSize: 12 }}
+                  label={{ value: "Response Time (ms)", angle: -90, position: "insideLeft" }}
+                />
+                <Tooltip 
+                  contentStyle={{
+                    background: "rgba(26, 32, 44, 0.95)",
+                    border: "1px solid #667eea",
+                    borderRadius: 8,
+                    color: "#fff",
+                  }}
+                  formatter={(value) => [`${value}ms`, "Response Time"]}
+                  labelFormatter={(label) => `Time: ${label}`}
+                />
+                <Legend />
+                <Line 
+                  type="monotone" 
+                  dataKey="responseTime" 
+                  stroke="#667eea" 
+                  dot={{ fill: "#667eea", r: 4 }}
+                  activeDot={{ r: 6 }}
+                  strokeWidth={2}
+                  name="Response Time (ms)"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div style={styles.analyticsStats}>
+            <div style={styles.statBox}>
+              <p style={styles.statLabel}>Average Response</p>
+              <p style={styles.statValue}>
+                {Math.round(analyticsData.reduce((sum, d) => sum + d.responseTime, 0) / analyticsData.length)}ms
+              </p>
+            </div>
+            <div style={styles.statBox}>
+              <p style={styles.statLabel}>Min Response</p>
+              <p style={styles.statValue}>
+                {Math.min(...analyticsData.map(d => d.responseTime))}ms
+              </p>
+            </div>
+            <div style={styles.statBox}>
+              <p style={styles.statLabel}>Max Response</p>
+              <p style={styles.statValue}>
+                {Math.max(...analyticsData.map(d => d.responseTime))}ms
+              </p>
+            </div>
+            <div style={styles.statBox}>
+              <p style={styles.statLabel}>Avg Uptime</p>
+              <p style={styles.statValue}>
+                {(analyticsData.reduce((sum, d) => sum + d.uptime, 0) / analyticsData.length).toFixed(2)}%
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ENDPOINTS GRID OR EMPTY STATE */}
       {data.length === 0 ? (
@@ -926,6 +1069,72 @@ const styles: any = {
     borderRadius: 6,
     fontSize: 11,
     fontWeight: 600,
+  },
+
+  // Analytics Styles
+  analyticsSection: {
+    background: "rgba(255,255,255,0.95)",
+    backdropFilter: "blur(20px)",
+    padding: 30,
+    borderRadius: 20,
+    marginBottom: 40,
+    boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
+    border: "1px solid rgba(255,255,255,0.2)",
+  },
+
+  endpointTabs: {
+    display: "flex",
+    gap: 8,
+    marginBottom: 24,
+    flexWrap: "wrap" as const,
+  },
+
+  tab: {
+    padding: "8px 16px",
+    borderRadius: 8,
+    border: "none",
+    cursor: "pointer",
+    fontSize: 13,
+    fontWeight: 600,
+    transition: "all 0.2s ease",
+    ":hover": {
+      background: "#e0e7ff",
+    },
+  },
+
+  chartContainer: {
+    marginBottom: 24,
+    padding: "20px",
+    background: "#f9fafb",
+    borderRadius: 12,
+  },
+
+  analyticsStats: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+    gap: 16,
+  },
+
+  statBox: {
+    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+    padding: 16,
+    borderRadius: 12,
+    color: "#fff",
+  },
+
+  statLabel: {
+    margin: 0,
+    fontSize: 12,
+    fontWeight: 600,
+    opacity: 0.9,
+    textTransform: "uppercase" as const,
+    letterSpacing: "0.5px",
+  },
+
+  statValue: {
+    margin: "8px 0 0 0",
+    fontSize: 24,
+    fontWeight: 700,
   },
 };
 
