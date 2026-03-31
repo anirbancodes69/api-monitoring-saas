@@ -1,14 +1,14 @@
 // Utility functions for Dashboard
 export const statusColor = (status: string) => {
-  if (status === "UP") return { bg: "#d1fae5", color: "#065f46", icon: "✓" };
+  if (status === "UP") return { bg: "#d1fae5", color: "#047857", icon: "✓" };
   if (status === "DOWN") return { bg: "#fee2e2", color: "#991b1b", icon: "⚠️" };
-  return { bg: "#f3f4f6", color: "#4b5563", icon: "?" };
+  return { bg: "#f1f5f9", color: "#475569", icon: "?" };
 };
 
 export const getSeverityStyle = (severity: string) => {
   if (severity === "critical") return { bg: "#fee2e2", color: "#991b1b", icon: "🔴" };
   if (severity === "warning") return { bg: "#fef3c7", color: "#92400e", icon: "🟡" };
-  return { bg: "#d1fae5", color: "#065f46", icon: "🟢" };
+  return { bg: "#d1fae5", color: "#047857", icon: "🟢" };
 };
 
 export const formatTimeDiff = (date: any) => {

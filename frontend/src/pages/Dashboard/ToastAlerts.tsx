@@ -19,8 +19,8 @@ export function ToastAlerts({ alerts }: ToastAlertsProps) {
           style={{
             ...styles.toast,
             background: a.type === "error" ? "#fee2e2" : "#d1fae5",
-            color: a.type === "error" ? "#991b1b" : "#065f46",
-            borderLeft: `4px solid ${a.type === "error" ? "#dc2626" : "#10b981"}`,
+            color: a.type === "error" ? "#991b1b" : "#047857",
+            borderColor: a.type === "error" ? "#fecaca" : "#a7f3d0",
           }}
         >
           {a.type === "error" ? "❌" : "✓"} {a.text}

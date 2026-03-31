@@ -9,18 +9,20 @@ import {
 import { removeToken } from "../utils/auth";
 import { useNavigate } from "react-router-dom";
 import { ToastAlerts } from "./Dashboard/ToastAlerts";
-import { Header } from "./Dashboard/Header";
-import { EndpointForm } from "./Dashboard/EndpointForm";
-import { AlertHistory } from "./Dashboard/AlertHistory";
-import { Analytics } from "./Dashboard/Analytics";
-import { EndpointsGrid } from "./Dashboard/EndpointsGrid";
+import { Sidebar } from "./Dashboard/Sidebar";
 import { Loader } from "./Dashboard/Loader";
+import { DashboardOverview } from "./Dashboard/DashboardOverview";
+import { EndpointsPage } from "./Dashboard/EndpointsPage";
+import { AnalyticsPage } from "./Dashboard/AnalyticsPage";
+import { AlertsPage } from "./Dashboard/AlertsPage";
 import { styles, injectStyles } from "./Dashboard/styles";
+import { layoutStyles } from "./Dashboard/layoutStyles";
 import { generateTimeSeriesData } from "./Dashboard/utils";
 
 export default function Dashboard() {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<"dashboard" | "endpoints" | "analytics" | "alerts">("dashboard");
   const [editingId, setEditingId] = useState<number | null>(null);
   const [adding, setAdding] = useState(false);
   const [alerts, setAlerts] = useState<{ id: number; text: string; type: "success" | "error" }[]>([]);
@@ -50,6 +52,11 @@ export default function Dashboard() {
   });
 
   const navigate = useNavigate();
+
+  // Inject styles on mount
+  useEffect(() => {
+    injectStyles();
+  }, []);
 
   // Inject styles on mount
   useEffect(() => {
@@ -233,33 +240,70 @@ export default function Dashboard() {
 
   if (loading) return <Loader />;
 
+  // Page title mapping
+  const pageNames: Record<string, string> = {
+    dashboard: "📊 Dashboard",
+    endpoints: "🔗 Manage Endpoints",
+    analytics: "📈 Response Analytics",
+    alerts: "🚨 Alert History",
+  };
+
   return (
-    <div style={styles.page}>
+    <div style={{ display: "flex", minHeight: "100vh", backgroundColor: styles.page.backgroundColor }}>
       <ToastAlerts alerts={alerts} />
-      <Header onLogout={handleLogout} />
-      <EndpointForm
-        editingId={editingId}
-        onAdd={handleAdd}
-        onUpdate={handleUpdate}
-        onCancel={resetForm}
-        loading={adding}
-        form={form}
-        onFormChange={handleChange}
-        onEdit={handleEdit}
-      />
-      <AlertHistory alertHistory={alertHistory} />
-      <Analytics
-        data={data}
-        analyticsData={analyticsData}
-        selectedEndpointAnalytics={selectedEndpointAnalytics}
-        onSelectEndpoint={setSelectedEndpointAnalytics}
-      />
-      <EndpointsGrid
-        data={data}
-        alertHistory={alertHistory}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
+      
+      {/* SIDEBAR NAVIGATION */}
+      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} onLogout={handleLogout} />
+
+      {/* MAIN CONTENT AREA */}
+      <div style={layoutStyles.mainContent}>
+        {/* PAGE HEADER */}
+        <div style={layoutStyles.pageHeader}>
+          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600, color: "#0f131f" }}>
+            {pageNames[activeTab]}
+          </h1>
+        </div>
+
+        {/* PAGE CONTENT - CONDITIONAL RENDERING */}
+        <div style={{ padding: "0 20px 20px 20px" }}>
+          {/* DASHBOARD PAGE */}
+          {activeTab === "dashboard" && (
+            <DashboardOverview data={data} alerts={alertHistory} />
+          )}
+
+          {/* ENDPOINTS PAGE */}
+          {activeTab === "endpoints" && (
+            <EndpointsPage
+              editingId={editingId}
+              onAdd={handleAdd}
+              onUpdate={handleUpdate}
+              onCancel={resetForm}
+              adding={adding}
+              form={form}
+              onFormChange={handleChange}
+              onEdit={handleEdit}
+              data={data}
+              alertHistory={alertHistory}
+              onDelete={handleDelete}
+            />
+          )}
+
+          {/* ANALYTICS PAGE */}
+          {activeTab === "analytics" && (
+            <AnalyticsPage
+              analyticsData={analyticsData}
+              selectedEndpointAnalytics={selectedEndpointAnalytics}
+              onSelectEndpoint={setSelectedEndpointAnalytics}
+              data={data}
+            />
+          )}
+
+          {/* ALERTS PAGE */}
+          {activeTab === "alerts" && (
+            <AlertsPage alertHistory={alertHistory} />
+          )}
+        </div>
+      </div>
     </div>
   );
 }

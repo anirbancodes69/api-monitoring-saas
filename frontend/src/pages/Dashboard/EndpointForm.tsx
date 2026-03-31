@@ -17,7 +17,6 @@ interface EndpointFormProps {
   loading: boolean;
   form: FormState;
   onFormChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
-  onEdit: (endpoint: any) => Promise<void>;
 }
 
 export function EndpointForm({

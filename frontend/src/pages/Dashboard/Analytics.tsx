@@ -58,9 +58,9 @@ export function Analytics({
               onClick={() => onSelectEndpoint(endpoint.endpoint_id)}
               style={{
                 ...styles.tab,
-                background: selectedEndpointAnalytics === endpoint.endpoint_id ? "#667eea" : "#f3f4f6",
-                color: selectedEndpointAnalytics === endpoint.endpoint_id ? "#fff" : "#1a202c",
-                borderBottom: selectedEndpointAnalytics === endpoint.endpoint_id ? "2px solid #667eea" : "none",
+                background: selectedEndpointAnalytics === endpoint.endpoint_id ? "#3b82f6" : "#f8f9fa",
+                color: selectedEndpointAnalytics === endpoint.endpoint_id ? "#fff" : "#64748b",
+                border: selectedEndpointAnalytics === endpoint.endpoint_id ? "1px solid #3b82f6" : "1px solid #e2e8f0",
               }}
             >
               {endpoint.name}
@@ -72,18 +72,18 @@ export function Analytics({
       <div style={styles.chartContainer}>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={analyticsData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-            <XAxis dataKey="time" stroke="#6b7280" style={{ fontSize: 12 }} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+            <XAxis dataKey="time" stroke="#94a3b8" style={{ fontSize: 12 }} />
             <YAxis
-              stroke="#6b7280"
+              stroke="#94a3b8"
               style={{ fontSize: 12 }}
               label={{ value: "Response Time (ms)", angle: -90, position: "insideLeft" }}
             />
             <Tooltip
               contentStyle={{
-                background: "rgba(26, 32, 44, 0.95)",
-                border: "1px solid #667eea",
-                borderRadius: 8,
+                background: "#0f131f",
+                border: "1px solid #e2e8f0",
+                borderRadius: 6,
                 color: "#fff",
               }}
               formatter={(value) => [`${value}ms`, "Response Time"]}
@@ -93,8 +93,8 @@ export function Analytics({
             <Line
               type="monotone"
               dataKey="responseTime"
-              stroke="#667eea"
-              dot={{ fill: "#667eea", r: 4 }}
+              stroke="#3b82f6"
+              dot={{ fill: "#3b82f6", r: 4 }}
               activeDot={{ r: 6 }}
               strokeWidth={2}
               name="Response Time (ms)"
