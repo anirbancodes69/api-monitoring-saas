@@ -601,3 +601,32 @@ Show “Recovered” or “Failed”
 Critical endpoints stand out
 ✅ 4. (Optional enhancement-ready)
 Hook for future alert history API
+
+
+-----------------
+
+✅ Day 14 Complete!
+
+Great progress on the Alert System Upgrade! Here's what was accomplished:
+
+Summary
+✅ Built Alert History Panel with real-time tracking
+✅ Implemented 3-tier severity levels (Critical/Warning/Success)
+✅ Added last alert badges to endpoint cards
+✅ Created time-ago formatting for alerts
+✅ Set up simulated data (ready for API integration)
+
+Analytics Graphs (Phase 1)
+🎯 Goal
+
+Show:
+
+📈 Response time trend
+📊 (Next) Uptime trend
+⏱ Last 24 hours data
+
+Revamped UI
+
+
+
+-----------------
