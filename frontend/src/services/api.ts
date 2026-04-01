@@ -144,3 +144,29 @@ export const deleteEndpoint = async (id: number) => {
 
   return true;
 };
+
+// 📊 GET ENDPOINT LOGS
+export const getEndpointLogs = async (id: number, limit = 50) => {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API_URL}/endpoints/${id}/logs?limit=${limit}`, {
+    headers: {
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (res.status === 401) {
+    removeToken();
+    window.location.href = "/";
+    return [];
+  }
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data.message || "Failed to fetch endpoint logs");
+  }
+
+  return data.data || [];
+};

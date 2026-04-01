@@ -21,9 +21,17 @@ interface AnalyticsData {
   hour: number;
 }
 
+interface AnalyticsStats {
+  avgResponse: number;
+  minResponse: number;
+  maxResponse: number;
+  avgUptime: string;
+}
+
 interface AnalyticsProps {
   data: Endpoint[];
   analyticsData: AnalyticsData[];
+  analyticsStats: AnalyticsStats;
   selectedEndpointAnalytics: number | null;
   onSelectEndpoint: (endpointId: number) => void;
 }
@@ -31,19 +39,16 @@ interface AnalyticsProps {
 export function Analytics({
   data,
   analyticsData,
+  analyticsStats,
   selectedEndpointAnalytics,
   onSelectEndpoint,
 }: AnalyticsProps) {
   if (data.length === 0) return null;
 
-  const avgResponse = analyticsData.length
-    ? Math.round(analyticsData.reduce((sum, d) => sum + d.responseTime, 0) / analyticsData.length)
-    : 0;
-  const minResponse = analyticsData.length ? Math.min(...analyticsData.map((d) => d.responseTime)) : 0;
-  const maxResponse = analyticsData.length ? Math.max(...analyticsData.map((d) => d.responseTime)) : 0;
-  const avgUptime = analyticsData.length
-    ? (analyticsData.reduce((sum, d) => sum + d.uptime, 0) / analyticsData.length).toFixed(2)
-    : "0";
+  const avgResponse = analyticsStats.avgResponse;
+  const minResponse = analyticsStats.minResponse;
+  const maxResponse = analyticsStats.maxResponse;
+  const avgUptime = analyticsStats.avgUptime;
 
   return (
     <div className="space-y-6">

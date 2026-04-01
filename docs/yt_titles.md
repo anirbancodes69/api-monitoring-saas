@@ -628,5 +628,36 @@ Show:
 Revamped UI
 
 
+Perfect — now we move from fake SaaS → real data-driven product 🔥
+
+This is a big upgrade:
+👉 Charts will now reflect actual API health from your api_logs table
+
+🚀 DAY 14 — PART 2 (REAL DATA)
+🎯 Goal
+
+For each endpoint:
+
+Fetch logs from backend
+Convert into chart data
+Show real response trend
+⚠️ ASSUMPTION (based on your backend)
+
+You already store:
+
+api_logs
+- endpoint_id
+- response_time
+- status
+- checked_at
+
+👉 Perfect — we’ll use this.
+
+🧱 STEP 1 — Backend API (VERY SMALL ADDITION)
+
+👉 You said: “only enhancements” — so we add ONE clean endpoint
+
+📁 routes/api.php
+Route::get('/endpoints/{id}/logs', [ApiLogController::class, 'index']);
 
 -----------------

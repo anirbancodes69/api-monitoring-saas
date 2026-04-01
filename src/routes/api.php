@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\EndpointController;
+use App\Http\Controllers\Api\ApiLogController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -21,6 +22,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/endpoints/{id}', [EndpointController::class, 'show']);
     Route::put('/endpoints/{id}', [EndpointController::class, 'update']);
     Route::delete('/endpoints/{id}', [EndpointController::class, 'destroy']);
+    Route::get('/endpoints/{id}/logs', [ApiLogController::class, 'index']);
 
     Route::get('/dashboard', [DashboardController::class, 'index']);
 });

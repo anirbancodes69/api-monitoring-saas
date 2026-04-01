@@ -12,9 +12,17 @@ interface AnalyticsData {
   hour: number;
 }
 
+interface AnalyticsStats {
+  avgResponse: number;
+  minResponse: number;
+  maxResponse: number;
+  avgUptime: string;
+}
+
 interface AnalyticsPageProps {
   data: Endpoint[];
   analyticsData: AnalyticsData[];
+  analyticsStats: AnalyticsStats;
   selectedEndpointAnalytics: number | null;
   onSelectEndpoint: (endpointId: number) => void;
 }
@@ -22,6 +30,7 @@ interface AnalyticsPageProps {
 export function AnalyticsPage({
   data,
   analyticsData,
+  analyticsStats,
   selectedEndpointAnalytics,
   onSelectEndpoint,
 }: AnalyticsPageProps) {
@@ -30,6 +39,7 @@ export function AnalyticsPage({
       <Analytics
         data={data}
         analyticsData={analyticsData}
+        analyticsStats={analyticsStats}
         selectedEndpointAnalytics={selectedEndpointAnalytics}
         onSelectEndpoint={onSelectEndpoint}
       />

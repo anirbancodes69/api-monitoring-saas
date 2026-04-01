@@ -5,6 +5,7 @@ import {
   addEndpoint,
   updateEndpoint,
   deleteEndpoint,
+  getEndpointLogs,
 } from "../services/api";
 import { removeToken } from "../utils/auth";
 import { useNavigate } from "react-router-dom";
@@ -16,7 +17,7 @@ import { EndpointsPage } from "./Dashboard/EndpointsPage";
 import { AnalyticsPage } from "./Dashboard/AnalyticsPage";
 import { AlertsPage } from "./Dashboard/AlertsPage";
 import { injectStyles } from "./Dashboard/styles";
-import { generateTimeSeriesData } from "./Dashboard/utils";
+import { convertLogsToChartData } from "./Dashboard/utils";
 
 export default function Dashboard() {
   const [data, setData] = useState<any[]>([]);
@@ -37,6 +38,12 @@ export default function Dashboard() {
 
   // 📈 ANALYTICS TIME-SERIES DATA STATE
   const [analyticsData, setAnalyticsData] = useState<any[]>([]);
+  const [analyticsStats, setAnalyticsStats] = useState<any>({
+    avgResponse: 0,
+    minResponse: 0,
+    maxResponse: 0,
+    avgUptime: "0.00",
+  });
   const [selectedEndpointAnalytics, setSelectedEndpointAnalytics] = useState<number | null>(null);
 
   const previousData = useRef<any[]>([]);
@@ -223,14 +230,43 @@ export default function Dashboard() {
     }, 4000);
   };
 
-  // Initialize analytics data on component mount
+  // Initialize analytics data on component mount and when selected endpoint changes
   useEffect(() => {
-    const initialData = generateTimeSeriesData();
-    setAnalyticsData(initialData);
-    if (data.length > 0) {
+    const fetchAnalyticsData = async () => {
+      if (!selectedEndpointAnalytics || data.length === 0) return;
+
+      try {
+        // Fetch real logs for the selected endpoint
+        const logs = await getEndpointLogs(selectedEndpointAnalytics, 50);
+        const result = convertLogsToChartData(logs);
+        setAnalyticsData(result.chartData);
+        setAnalyticsStats(result.stats);
+      } catch (error) {
+        console.error("Failed to fetch analytics data:", error);
+        // Fallback to fake data on error
+        const fallback = convertLogsToChartData([]);
+        setAnalyticsData(fallback.chartData);
+        setAnalyticsStats(fallback.stats);
+      }
+    };
+
+    if (!selectedEndpointAnalytics && data.length > 0) {
+      // Initialize with first endpoint if not selected
       setSelectedEndpointAnalytics(data[0].endpoint_id);
+    } else {
+      fetchAnalyticsData();
     }
-  }, [data]);
+
+    // Auto-refresh analytics every 30 seconds when on analytics tab
+    // let analyticsInterval: NodeJS.Timeout | null = null;
+    // if (activeTab === "analytics" && selectedEndpointAnalytics) {
+    //   analyticsInterval = setInterval(fetchAnalyticsData, 30000);
+    // }
+
+    // return () => {
+    //   if (analyticsInterval) clearInterval(analyticsInterval);
+    // };
+  }, [data, selectedEndpointAnalytics, activeTab]);
 
   const handleLogout = () => {
     removeToken();
@@ -295,6 +331,7 @@ export default function Dashboard() {
             {activeTab === "analytics" && (
               <AnalyticsPage
                 analyticsData={analyticsData}
+                analyticsStats={analyticsStats}
                 selectedEndpointAnalytics={selectedEndpointAnalytics}
                 onSelectEndpoint={setSelectedEndpointAnalytics}
                 data={data}

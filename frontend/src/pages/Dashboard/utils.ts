@@ -20,6 +20,138 @@ export const formatTimeDiff = (date: any) => {
   return `${Math.floor(diff / 86400)}d ago`;
 };
 
+/**
+ * Convert UTC timestamp to IST (UTC+5:30) local time
+ */
+const convertToIST = (utcDateString: string): Date => {
+  const utcDate = new Date(utcDateString);
+  // Add 5.5 hours (5 hours 30 minutes) for IST
+  const istDate = new Date(utcDate.getTime() + 5.5 * 60 * 60 * 1000);
+  return istDate;
+};
+
+/**
+ * Convert API logs to chart data format + overall stats
+ * Groups logs by 15-minute intervals for chart visualization
+ * Calculates overall uptime and response time matching Endpoints Tab
+ */
+export const convertLogsToChartData = (logs: any[]) => {
+  if (!logs || logs.length === 0) {
+    return {
+      chartData: generateTimeSeriesData(),
+      stats: {
+        avgResponse: 0,
+        minResponse: 0,
+        maxResponse: 0,
+        avgUptime: "0.00",
+      },
+    };
+  }
+
+  // Calculate overall stats (matching Endpoints Tab calculation)
+  const totalLogs = logs.length;
+  
+  // Check for both 'success' and 'UP' status values
+  const successCount = logs.filter(
+    (log) => log.status === "success" || log.status === "UP"
+  ).length;
+  
+  const responseTimes = logs
+    .map((log) => log.response_time || 0)
+    .filter((time) => time > 0);
+  
+  const avgResponse = responseTimes.length
+    ? Math.round(
+        responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length
+      )
+    : 0;
+  
+  const minResponse = responseTimes.length ? Math.round(Math.min(...responseTimes)) : 0;
+  const maxResponse = responseTimes.length ? Math.round(Math.max(...responseTimes)) : 0;
+  
+  const avgUptime = totalLogs > 0
+    ? (Math.round((successCount / totalLogs) * 10000) / 100).toFixed(2)
+    : "0.00";
+
+  // Group logs by 15-minute intervals
+  const grouped: Record<string, any[]> = {};
+
+  logs.forEach((log) => {
+    // Convert UTC timestamp to IST (UTC+5:30)
+    const istDate = convertToIST(log.checked_at);
+    
+    // Get IST time components
+    const hours = istDate.getHours().toString().padStart(2, "0");
+    const minutes = istDate.getMinutes();
+    
+    // Round down to nearest 15-minute interval (0, 15, 30, 45)
+    const interval = Math.floor(minutes / 15) * 15;
+    const intervalStr = interval.toString().padStart(2, "0");
+    const key = `${hours}:${intervalStr}`;
+
+    if (!grouped[key]) {
+      grouped[key] = [];
+    }
+    grouped[key].push(log);
+  });
+
+  // Generate all 24-hour × 4 intervals = 96 time slots
+  const allTimeSlots: Record<string, any[]> = {};
+  for (let hour = 0; hour < 24; hour++) {
+    for (let interval = 0; interval < 60; interval += 15) {
+      const hourStr = hour.toString().padStart(2, "0");
+      const intervalStr = interval.toString().padStart(2, "0");
+      const key = `${hourStr}:${intervalStr}`;
+      allTimeSlots[key] = grouped[key] || [];
+    }
+  }
+
+  // Convert grouped data to chart format
+  const chartData = Object.entries(allTimeSlots)
+    .map(([time, logsForInterval]) => {
+      let intervalAvgResponseTime = 0;
+      let intervalUptime = 0;
+
+      if (logsForInterval.length > 0) {
+        const intervalResponseTimes = logsForInterval
+          .map((log) => log.response_time || 0)
+          .filter((time) => time > 0);
+        
+        intervalAvgResponseTime = intervalResponseTimes.length
+          ? Math.round(
+              intervalResponseTimes.reduce((sum, time) => sum + time, 0) /
+                intervalResponseTimes.length
+            )
+          : 0;
+
+        // Calculate uptime for this interval (check for both status values)
+        const intervalSuccessCount = logsForInterval.filter(
+          (log) => log.status === "success" || log.status === "UP"
+        ).length;
+        intervalUptime = Math.round(
+          (intervalSuccessCount / logsForInterval.length) * 100 * 100
+        ) / 100;
+      }
+
+      return {
+        time,
+        responseTime: intervalAvgResponseTime,
+        uptime: intervalUptime,
+        hour: parseInt(time.split(":")[0]),
+      };
+    });
+
+  return {
+    chartData,
+    stats: {
+      avgResponse,
+      minResponse,
+      maxResponse,
+      avgUptime,
+    },
+  };
+};
+
 export const generateTimeSeriesData = () => {
   const now = new Date();
   const chartData = [];
