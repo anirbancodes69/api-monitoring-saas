@@ -1,4 +1,3 @@
-import { styles } from "./styles";
 import { EndpointCard } from "./EndpointCard";
 import { EmptyState } from "./EmptyState";
 
@@ -19,7 +18,7 @@ export function EndpointsGrid({ data, alertHistory, onEdit, onDelete }: Endpoint
   }
 
   return (
-    <div style={styles.grid}>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {data.map((endpoint: any) => (
         <EndpointCard
           key={endpoint.endpoint_id}

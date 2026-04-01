@@ -69,79 +69,75 @@ export default function Login() {
   };
 
   return (
-    <div style={styles.container}>
+    <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-hidden">
       {/* Background decoration */}
-      <div style={styles.decorCircle1}></div>
-      <div style={styles.decorCircle2}></div>
+      <div className="absolute top-0 left-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
+      <div className="absolute bottom-0 right-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
 
-      <form onSubmit={handleLogin} style={styles.formContainer}>
+      <form onSubmit={handleLogin} className="relative z-10 w-full max-w-md mx-4 bg-slate-800/40 backdrop-blur-xl rounded-2xl p-8 border border-slate-700/50 shadow-2xl">
         {/* Header */}
-        <div style={styles.header}>
-          <h1 style={styles.title}>🚀 API Monitor</h1>
-          <p style={styles.subtitle}>Real-time endpoint monitoring</p>
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent mb-2">🚀 APILENS</h1>
+          <p className="text-sm text-slate-400 font-medium m-0">Real-time endpoint monitoring</p>
         </div>
 
         {/* Error Alert */}
         {error && (
-          <div style={styles.errorAlert}>
-            <p style={styles.errorText}>❌ {error}</p>
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg animate-in slide-in-from-top-2 duration-300">
+            <p className="text-red-400 text-sm font-semibold m-0">❌ {error}</p>
           </div>
         )}
 
         {/* Email Field */}
-        <div style={styles.formGroup}>
-          <label style={styles.label}>Email Address</label>
+        <div className="mb-5">
+          <label className="block text-sm font-semibold text-slate-300 mb-2">Email Address</label>
           <input
             type="email"
             placeholder="your@email.com"
             value={email}
             onChange={(e) => handleFieldChange("email", e.target.value)}
             onKeyPress={(e) => e.key === "Enter" && handleLogin(e as any)}
-            style={{
-              ...styles.input,
-              borderColor: errors.email ? "#dc2626" : "#e5e7eb",
-              backgroundColor: errors.email ? "#fef2f2" : "rgba(255,255,255,0.8)",
-            }}
+            className={`w-full px-4 py-3 rounded-lg bg-slate-700/30 border-2 transition-all duration-300 text-white placeholder-slate-500 focus:outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-400/20 ${
+              errors.email ? "border-red-500/50 bg-red-500/5" : "border-slate-600/50"
+            }`}
           />
-          {errors.email && <p style={styles.errorMessage}>{errors.email}</p>}
+          {errors.email && <p className="text-red-400 text-xs font-semibold mt-1.5 m-0">{errors.email}</p>}
         </div>
 
         {/* Password Field */}
-        <div style={styles.formGroup}>
-          <label style={styles.label}>Password</label>
-          <div style={styles.passwordWrapper}>
+        <div className="mb-5">
+          <label className="block text-sm font-semibold text-slate-300 mb-2">Password</label>
+          <div className="relative flex items-center">
             <input
               type={showPassword ? "text" : "password"}
               placeholder="••••••••"
               value={password}
               onChange={(e) => handleFieldChange("password", e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && handleLogin(e as any)}
-              style={{
-                ...styles.input,
-                borderColor: errors.password ? "#dc2626" : "#e5e7eb",
-                backgroundColor: errors.password ? "#fef2f2" : "rgba(255,255,255,0.8)",
-              }}
+              className={`w-full px-4 py-3 rounded-lg bg-slate-700/30 border-2 transition-all duration-300 text-white placeholder-slate-500 focus:outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-400/20 ${
+                errors.password ? "border-red-500/50 bg-red-500/5" : "border-slate-600/50"
+              }`}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              style={styles.toggleButton}
+              className="absolute right-3 bg-none border-none cursor-pointer text-lg p-1 text-slate-400 hover:text-slate-300 transition-colors"
               title={showPassword ? "Hide password" : "Show password"}
             >
               {showPassword ? "👁️" : "👁️‍🗨️"}
             </button>
           </div>
-          {errors.password && <p style={styles.errorMessage}>{errors.password}</p>}
+          {errors.password && <p className="text-red-400 text-xs font-semibold mt-1.5 m-0">{errors.password}</p>}
         </div>
 
         {/* Remember Me */}
-        <div style={styles.rememberMe}>
+        <div className="flex items-center gap-2 mb-6">
           <input
             type="checkbox"
             id="remember"
-            style={{ cursor: "pointer" }}
+            className="cursor-pointer w-4 h-4 rounded accent-blue-400"
           />
-          <label htmlFor="remember" style={{ cursor: "pointer", fontSize: 14, color: "#6b7280" }}>
+          <label htmlFor="remember" className="cursor-pointer text-sm text-slate-400 hover:text-slate-300 transition-colors m-0">
             Remember me
           </label>
         </div>
@@ -150,250 +146,33 @@ export default function Login() {
         <button
           type="submit"
           disabled={loading}
-          style={{
-            ...styles.loginBtn,
-            opacity: loading ? 0.7 : 1,
-            cursor: loading ? "not-allowed" : "pointer",
-          }}
+          className={`w-full py-3 px-4 rounded-lg font-bold text-white transition-all duration-300 flex items-center justify-center gap-2 ${
+            loading
+              ? "bg-gradient-to-r from-blue-500/50 to-cyan-500/50 opacity-70 cursor-not-allowed"
+              : "bg-gradient-to-r from-blue-500 to-cyan-400 hover:from-blue-600 hover:to-cyan-500 hover:shadow-lg hover:shadow-blue-500/25 active:scale-95 shadow-lg shadow-blue-500/20"
+          }`}
         >
           {loading ? (
-            <span style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <span style={styles.spinner}></span>
+            <>
+              <svg className="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
               Signing in...
-            </span>
+            </>
           ) : (
             "Sign In"
           )}
         </button>
 
         {/* Footer */}
-        <p style={styles.footer}>
+        <p className="text-center mt-6 text-sm text-slate-400 m-0">
           Don't have an account?{" "}
-          <span style={styles.link} onClick={() => navigate("/register")}>
+          <span onClick={() => navigate("/register")} className="text-blue-400 font-bold cursor-pointer hover:text-cyan-300 transition-colors">
             Create one
           </span>
         </p>
       </form>
     </div>
   );
-}
-
-const styles: any = {
-  container: {
-    minHeight: "100vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    background: "linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)",
-    fontFamily: "'Segoe UI', system-ui, -apple-system, sans-serif",
-    position: "relative",
-    overflow: "hidden",
-  },
-
-  decorCircle1: {
-    position: "absolute",
-    width: 300,
-    height: 300,
-    background: "rgba(255,255,255,0.1)",
-    borderRadius: "50%",
-    top: -100,
-    left: -100,
-    backdropFilter: "blur(10px)",
-  },
-
-  decorCircle2: {
-    position: "absolute",
-    width: 200,
-    height: 200,
-    background: "rgba(255,255,255,0.05)",
-    borderRadius: "50%",
-    bottom: -50,
-    right: -50,
-    backdropFilter: "blur(10px)",
-  },
-
-  formContainer: {
-    background: "rgba(255,255,255,0.95)",
-    backdropFilter: "blur(20px)",
-    padding: 40,
-    borderRadius: 24,
-    width: "100%",
-    maxWidth: 420,
-    boxShadow: "0 25px 50px rgba(0,0,0,0.15)",
-    border: "1px solid rgba(255,255,255,0.2)",
-    position: "relative",
-    zIndex: 10,
-  },
-
-  header: {
-    textAlign: "center" as const,
-    marginBottom: 32,
-  },
-
-  title: {
-    fontSize: 32,
-    fontWeight: 800,
-    color: "#1a202c",
-    margin: 0,
-    marginBottom: 8,
-    letterSpacing: "-0.5px",
-  },
-
-  subtitle: {
-    fontSize: 14,
-    color: "#6b7280",
-    margin: 0,
-    fontWeight: 500,
-  },
-
-  errorAlert: {
-    background: "#fee2e2",
-    border: "1px solid #fecaca",
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 24,
-    animation: "slideDown 0.3s ease",
-  },
-
-  errorText: {
-    color: "#991b1b",
-    margin: 0,
-    fontSize: 14,
-    fontWeight: 600,
-  },
-
-  formGroup: {
-    marginBottom: 20,
-  },
-
-  label: {
-    display: "block",
-    fontSize: 14,
-    fontWeight: 600,
-    color: "#374151",
-    marginBottom: 8,
-  },
-
-  input: {
-    width: "100%",
-    padding: "12px 14px",
-    borderRadius: 12,
-    border: "2px solid #e5e7eb",
-    fontSize: 14,
-    fontFamily: "inherit",
-    transition: "all 0.3s ease",
-    color: "#1a202c",
-    boxSizing: "border-box" as const,
-  },
-
-  passwordWrapper: {
-    position: "relative" as const,
-    display: "flex",
-    alignItems: "center",
-  },
-
-  toggleButton: {
-    position: "absolute" as const,
-    right: 12,
-    background: "none",
-    border: "none",
-    cursor: "pointer",
-    fontSize: 18,
-    padding: 4,
-  },
-
-  errorMessage: {
-    color: "#dc2626",
-    fontSize: 12,
-    marginTop: 6,
-    margin: 0,
-    fontWeight: 600,
-  },
-
-  rememberMe: {
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 24,
-    fontSize: 14,
-  },
-
-  loginBtn: {
-    width: "100%",
-    padding: "14px 16px",
-    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-    color: "#fff",
-    border: "none",
-    borderRadius: 12,
-    fontSize: 16,
-    fontWeight: 700,
-    cursor: "pointer",
-    transition: "all 0.3s ease",
-    boxShadow: "0 10px 25px rgba(102, 126, 234, 0.3)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-  },
-
-  spinner: {
-    display: "inline-block",
-    width: 14,
-    height: 14,
-    border: "2px solid rgba(255,255,255,0.3)",
-    borderTop: "2px solid #fff",
-    borderRadius: "50%",
-    animation: "spin 0.6s linear infinite",
-  },
-
-  footer: {
-    textAlign: "center" as const,
-    marginTop: 20,
-    fontSize: 14,
-    color: "#6b7280",
-    margin: "20px 0 0 0",
-  },
-
-  link: {
-    color: "#667eea",
-    fontWeight: 700,
-    cursor: "pointer",
-    transition: "color 0.2s ease",
-    ":hover": {
-      color: "#764ba2",
-    },
-  },
-};
-
-// Add CSS animations
-const styleSheet = document.createElement("style");
-styleSheet.textContent = `
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-  @keyframes slideDown {
-    from {
-      transform: translateY(-10px);
-      opacity: 0;
-    }
-    to {
-      transform: translateY(0);
-      opacity: 1;
-    }
-  }
-  input:focus {
-    outline: none;
-    border-color: #667eea !important;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-  }
-  button:active:not(:disabled) {
-    transform: scale(0.98);
-  }
-  a {
-    text-decoration: none;
-  }
-`;
-if (!document.head.querySelector("[data-login-styles]")) {
-  styleSheet.setAttribute("data-login-styles", "true");
-  document.head.appendChild(styleSheet);
 }

@@ -1,5 +1,3 @@
-import { styles } from "./styles";
-
 interface Endpoint {
   endpoint_id: number;
   name: string;
@@ -25,91 +23,83 @@ export function DashboardOverview({ data }: DashboardOverviewProps) {
       : 0;
 
   const stats = [
-    { label: "Total Endpoints", value: totalEndpoints, color: "#3b82f6" },
-    { label: "Online", value: upEndpoints, color: "#10b981" },
-    { label: "Offline", value: downEndpoints, color: "#ef4444" },
-    { label: "Avg Uptime", value: `${avgUptime}%`, color: "#f59e0b" },
+    { label: "Total", value: totalEndpoints, icon: "📡", gradient: "from-blue-500 to-cyan-500", bgGradient: "from-blue-500/10" },
+    { label: "Online", value: upEndpoints, icon: "✓", gradient: "from-emerald-500 to-teal-500", bgGradient: "from-emerald-500/10" },
+    { label: "Offline", value: downEndpoints, icon: "⚠️", gradient: "from-red-500 to-pink-500", bgGradient: "from-red-500/10" },
+    { label: "Uptime", value: `${avgUptime}%`, icon: "📊", gradient: "from-amber-500 to-orange-500", bgGradient: "from-amber-500/10" },
   ];
 
   return (
-    <div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16, marginBottom: 32 }}>
+    <div className="space-y-6">
+      {/* STATS CARDS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, idx) => (
           <div
             key={idx}
-            style={{
-              background: "#fff",
-              padding: 20,
-              borderRadius: 12,
-              border: "1px solid #e2e8f0",
-              boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
-            }}
+            className={`group relative bg-gradient-to-br ${stat.bgGradient} to-slate-900/30 border border-slate-700/30 hover:border-slate-600/60 rounded-xl p-6 cursor-pointer transition-all duration-300 hover:shadow-lg hover:shadow-slate-900/50 hover:-translate-y-0.5`}
           >
-            <p style={{ margin: 0, fontSize: 12, color: "#64748b", fontWeight: 500, textTransform: "uppercase" as const, letterSpacing: "0.3px" }}>
-              {stat.label}
-            </p>
-            <p style={{ margin: "8px 0 0 0", fontSize: 32, fontWeight: 700, color: stat.color }}>
-              {stat.value}
-            </p>
+            {/* Accent border on hover */}
+            <div className={`absolute inset-0 rounded-xl bg-gradient-to-br ${stat.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
+            
+            {/* Content */}
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{stat.label}</p>
+                <span className="text-2xl opacity-70">{stat.icon}</span>
+              </div>
+              <p className={`text-3xl lg:text-4xl font-bold bg-gradient-to-r ${stat.gradient} bg-clip-text text-transparent`}>
+                {stat.value}
+              </p>
+            </div>
           </div>
         ))}
       </div>
 
+      {/* EMPTY STATE */}
       {data.length === 0 ? (
-        <div style={styles.emptyState}>
-          <p style={styles.emptyIcon}>📡</p>
-          <h3 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: "#0f131f" }}>No Endpoints Yet</h3>
-          <p style={{ margin: 12, fontSize: 13, color: "#64748b" }}>
+        <div className="flex flex-col items-center justify-center py-12 px-6 bg-slate-800/20 border border-slate-700/30 rounded-xl">
+          <p className="text-4xl mb-4">📡</p>
+          <h3 className="text-lg font-semibold text-white mb-2">No Endpoints Yet</h3>
+          <p className="text-slate-400 text-center text-sm max-w-sm">
             Go to Endpoints section to add your first API endpoint.
           </p>
         </div>
       ) : (
-        <div
-          style={{
-            background: "#fff",
-            padding: 24,
-            borderRadius: 12,
-            border: "1px solid #e2e8f0",
-            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
-          }}
-        >
-          <h3 style={{ margin: "0 0 16px 0", fontSize: 16, fontWeight: 600, color: "#0f131f" }}>
-            Recent Endpoints
-          </h3>
-          <div style={{ display: "flex", flexDirection: "column" as const, gap: 12 }}>
+        <div className="bg-slate-800/20 border border-slate-700/30 rounded-xl p-6 backdrop-blur-sm">
+          <div className="flex items-center justify-between mb-5">
+            <h3 className="text-lg font-semibold text-white">Recent Endpoints</h3>
+            <span className="text-xs font-medium text-slate-400 bg-slate-800/60 px-3 py-1.5 rounded-full">
+              Top 5
+            </span>
+          </div>
+          
+          <div className="space-y-2">
             {data.slice(0, 5).map((endpoint) => (
               <div
                 key={endpoint.endpoint_id}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  padding: 12,
-                  background: "#f8f9fa",
-                  borderRadius: 8,
-                  border: "1px solid #e2e8f0",
-                }}
+                className="group flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 bg-slate-800/20 hover:bg-slate-800/40 border border-slate-700/20 hover:border-slate-600/30 rounded-lg transition-all duration-200"
               >
-                <div>
-                  <p style={{ margin: 0, fontWeight: 600, color: "#0f131f" }}>{endpoint.name}</p>
-                  <p style={{ margin: "4px 0 0 0", fontSize: 12, color: "#64748b" }}>{endpoint.url}</p>
+                <div className="flex-1 min-w-0 w-full sm:w-auto">
+                  <p className="font-medium text-white truncate text-sm lg:text-base">{endpoint.name}</p>
+                  <p className="text-xs text-slate-400 truncate mt-1">{endpoint.url}</p>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <span
-                    style={{
-                      padding: "6px 12px",
-                      borderRadius: 6,
-                      fontSize: 11,
-                      fontWeight: 600,
-                      background: endpoint.status === "UP" ? "#d1fae5" : "#fee2e2",
-                      color: endpoint.status === "UP" ? "#047857" : "#991b1b",
-                    }}
-                  >
-                    {endpoint.status === "UP" ? "✓" : "⚠️"} {endpoint.status}
+                
+                <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+                  {/* Status Badge */}
+                  <span className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap ${
+                    endpoint.status === "UP"
+                      ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                      : "bg-red-500/20 text-red-300 border border-red-500/30"
+                  }`}>
+                    <span className={`w-2 h-2 rounded-full ${endpoint.status === "UP" ? "bg-emerald-400" : "bg-red-400"}`}></span>
+                    {endpoint.status}
                   </span>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "#0f131f", minWidth: 60, textAlign: "right" as const }}>
-                    {endpoint.uptime_percentage}%
-                  </span>
+                  
+                  {/* Uptime */}
+                  <div className="text-right">
+                    <p className="font-bold text-white text-sm lg:text-base">{endpoint.uptime_percentage}%</p>
+                    <p className="text-xs text-slate-400">Uptime</p>
+                  </div>
                 </div>
               </div>
             ))}

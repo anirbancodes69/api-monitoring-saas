@@ -8,7 +8,7 @@ export function Header({ onLogout }: HeaderProps) {
   return (
     <div style={styles.header}>
       <div>
-        <h1 style={styles.title}>🚀 API Monitor</h1>
+        <h1 style={styles.title}>🚀 APILENS</h1>
         <p style={styles.subtitle}>Real-time endpoint monitoring</p>
       </div>
 

@@ -616,5 +616,17 @@ Summary
 ✅ Created time-ago formatting for alerts
 ✅ Set up simulated data (ready for API integration)
 
+Analytics Graphs (Phase 1)
+🎯 Goal
+
+Show:
+
+📈 Response time trend
+📊 (Next) Uptime trend
+⏱ Last 24 hours data
+
+Revamped UI
+
+
 
 -----------------

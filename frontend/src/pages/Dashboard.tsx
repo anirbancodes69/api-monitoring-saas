@@ -15,8 +15,7 @@ import { DashboardOverview } from "./Dashboard/DashboardOverview";
 import { EndpointsPage } from "./Dashboard/EndpointsPage";
 import { AnalyticsPage } from "./Dashboard/AnalyticsPage";
 import { AlertsPage } from "./Dashboard/AlertsPage";
-import { styles, injectStyles } from "./Dashboard/styles";
-import { layoutStyles } from "./Dashboard/layoutStyles";
+import { injectStyles } from "./Dashboard/styles";
 import { generateTimeSeriesData } from "./Dashboard/utils";
 
 export default function Dashboard() {
@@ -249,59 +248,64 @@ export default function Dashboard() {
   };
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", backgroundColor: styles.page.backgroundColor }}>
+    <div className="flex h-screen w-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 fixed inset-0">
       <ToastAlerts alerts={alerts} />
       
       {/* SIDEBAR NAVIGATION */}
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} onLogout={handleLogout} />
 
       {/* MAIN CONTENT AREA */}
-      <div style={layoutStyles.mainContent}>
+      <div className="ml-0 lg:ml-[260px] flex-1 flex flex-col overflow-hidden">
         {/* PAGE HEADER */}
-        <div style={layoutStyles.pageHeader}>
-          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 600, color: "#0f131f" }}>
-            {pageNames[activeTab]}
-          </h1>
+        <div className="border-b border-slate-700/50 bg-gradient-to-r from-slate-800/40 to-slate-800/20 backdrop-blur-sm px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+          <div>
+            <h1 className="m-0 text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-400 via-blue-300 to-cyan-300 bg-clip-text text-transparent">
+              {pageNames[activeTab]}
+            </h1>
+            <p className="mt-2 text-xs sm:text-sm text-slate-400">Monitor and manage your API endpoints with precision</p>
+          </div>
         </div>
 
         {/* PAGE CONTENT - CONDITIONAL RENDERING */}
-        <div style={{ padding: "0 20px 20px 20px" }}>
-          {/* DASHBOARD PAGE */}
-          {activeTab === "dashboard" && (
-            <DashboardOverview data={data} alerts={alertHistory} />
-          )}
+        <div className="flex-1 px-4 sm:px-6 lg:px-8 py-6 lg:py-8 overflow-y-auto">
+          <div className="max-w-7xl mx-auto">
+            {/* DASHBOARD PAGE */}
+            {activeTab === "dashboard" && (
+              <DashboardOverview data={data} alerts={alertHistory} />
+            )}
 
-          {/* ENDPOINTS PAGE */}
-          {activeTab === "endpoints" && (
-            <EndpointsPage
-              editingId={editingId}
-              onAdd={handleAdd}
-              onUpdate={handleUpdate}
-              onCancel={resetForm}
-              adding={adding}
-              form={form}
-              onFormChange={handleChange}
-              onEdit={handleEdit}
-              data={data}
-              alertHistory={alertHistory}
-              onDelete={handleDelete}
-            />
-          )}
+            {/* ENDPOINTS PAGE */}
+            {activeTab === "endpoints" && (
+              <EndpointsPage
+                editingId={editingId}
+                onAdd={handleAdd}
+                onUpdate={handleUpdate}
+                onCancel={resetForm}
+                adding={adding}
+                form={form}
+                onFormChange={handleChange}
+                onEdit={handleEdit}
+                data={data}
+                alertHistory={alertHistory}
+                onDelete={handleDelete}
+              />
+            )}
 
-          {/* ANALYTICS PAGE */}
-          {activeTab === "analytics" && (
-            <AnalyticsPage
-              analyticsData={analyticsData}
-              selectedEndpointAnalytics={selectedEndpointAnalytics}
-              onSelectEndpoint={setSelectedEndpointAnalytics}
-              data={data}
-            />
-          )}
+            {/* ANALYTICS PAGE */}
+            {activeTab === "analytics" && (
+              <AnalyticsPage
+                analyticsData={analyticsData}
+                selectedEndpointAnalytics={selectedEndpointAnalytics}
+                onSelectEndpoint={setSelectedEndpointAnalytics}
+                data={data}
+              />
+            )}
 
-          {/* ALERTS PAGE */}
-          {activeTab === "alerts" && (
-            <AlertsPage alertHistory={alertHistory} />
-          )}
+            {/* ALERTS PAGE */}
+            {activeTab === "alerts" && (
+              <AlertsPage alertHistory={alertHistory} />
+            )}
+          </div>
         </div>
       </div>
     </div>
